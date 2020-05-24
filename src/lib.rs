@@ -3,16 +3,18 @@ use bcrypt;
 pub struct User {
     id: String,
     email: String,
+    password: Hash,
 }
 
 impl User {
-    pub fn new(id: &str, email: &str) -> Result<User, String> {
+    pub fn new(id: &str, email: &str, password: &Hash) -> Result<User, String> {
         Self::verify_id(id)?;
         Self::verify_email(email)?;
 
         Ok(User {
             id: String::from(id),
             email: String::from(email),
+            password: password.clone(),
         })
     }
 
@@ -22,6 +24,10 @@ impl User {
 
     pub fn email(&self) -> &String {
         &self.email
+    }
+
+    pub fn password(&self) -> &Hash {
+        &self.password
     }
 
     fn verify_id(id: &str) -> Result<(), String> {
