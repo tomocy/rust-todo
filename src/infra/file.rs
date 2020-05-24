@@ -6,20 +6,78 @@ use super::super::User as DomainUser;
 use super::super::UserRepo as DomainUserRepo;
 use super::rand;
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::io::prelude::*;
 use std::path::Path;
 
 pub struct UserRepo {
-    workspace: String,
+    file: File,
 }
 
 impl UserRepo {
-    pub fn new(workspace: &str) -> Self {
-        UserRepo {
-            workspace: workspace.to_string(),
+    pub fn new(workspace: &str) -> Result<Self, String> {
+        Ok(UserRepo {
+            file: File::new(workspace)?,
+        })
+    }
+}
+
+impl DomainUserRepo for UserRepo {
+    fn next_id(&self) -> Result<String, String> {
+        Ok(rand::generate_string(50))
+    }
+
+    fn find_by_email(&self, email: &str) -> Result<Option<DomainUser>, String> {
+        let store = self.file.load()?;
+        for (_, user) in &store.users {
+            if user.email == email {
+                return Ok(Some(DomainUser::from(user.clone())));
+            }
         }
+
+        Ok(None)
+    }
+
+    fn save(&mut self, user: &DomainUser) -> Result<(), String> {
+        let mut store = self.file.load()?;
+        store
+            .users
+            .insert(user.id().clone(), User::from(user.clone()));
+
+        self.file.store(&store)
+    }
+}
+
+struct File {
+    workspace: String,
+}
+
+impl File {
+    fn new(workspace: &str) -> Result<Self, String> {
+        let file = File {
+            workspace: workspace.to_string(),
+        };
+
+        file.init_store_file_if_not_exist()?;
+
+        Ok(file)
+    }
+
+    fn init_store_file_if_not_exist(&self) -> Result<(), String> {
+        let path = self.store_path()?;
+
+        if Path::new(&path).exists() {
+            return Ok(());
+        }
+
+        let store = serde_json::to_string(&Store::new()).map_err(|err| err.to_string())?;
+
+        fs::File::create(path)
+            .map_err(|err| err.to_string())?
+            .write_all(store.as_bytes())
+            .map_err(|err| err.to_string())
     }
 
     fn load(&self) -> Result<Store, String> {
@@ -37,27 +95,9 @@ impl UserRepo {
 
     fn store(&self, store: &Store) -> Result<(), String> {
         let path = self.store_path()?;
-        let store = serde_json::to_string(&store).map_err(|err| err.to_string())?;
+        let store = serde_json::to_string(store).map_err(|err| err.to_string())?;
 
         self.init_store_file_if_not_exist()?;
-        fs::File::create(path)
-            .map_err(|err| err.to_string())?
-            .write_all(store.as_bytes())
-            .map_err(|err| err.to_string())
-    }
-
-    fn init_store_file_if_not_exist(&self) -> Result<(), String> {
-        let path = self.store_path()?;
-
-        if Path::new(&path).exists() {
-            return Ok(());
-        }
-
-        let store = serde_json::to_string(&Store {
-            users: HashMap::new(),
-        })
-        .map_err(|err| err.to_string())?;
-
         fs::File::create(path)
             .map_err(|err| err.to_string())?
             .write_all(store.as_bytes())
@@ -74,35 +114,17 @@ impl UserRepo {
     }
 }
 
-impl DomainUserRepo for UserRepo {
-    fn next_id(&self) -> Result<String, String> {
-        Ok(rand::generate_string(50))
-    }
-
-    fn find_by_email(&self, email: &str) -> Result<Option<DomainUser>, String> {
-        let store = self.load()?;
-        for (_, user) in &store.users {
-            if user.email == email {
-                return Ok(Some(DomainUser::from(user.clone())));
-            }
-        }
-
-        Ok(None)
-    }
-
-    fn save(&mut self, user: &DomainUser) -> Result<(), String> {
-        let mut store = self.load()?;
-        store
-            .users
-            .insert(user.id().clone(), User::from(user.clone()));
-
-        self.store(&store)
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 struct Store {
     users: HashMap<String, User>,
+}
+
+impl Store {
+    fn new() -> Self {
+        Store {
+            users: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
