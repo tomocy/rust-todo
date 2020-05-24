@@ -76,6 +76,7 @@ pub struct Task {
     id: String,
     user_id: String,
     name: String,
+    completed: bool,
 }
 
 impl Task {
@@ -88,6 +89,7 @@ impl Task {
             id: id.to_string(),
             user_id: user_id.to_string(),
             name: name.to_string(),
+            completed: false,
         })
     }
 
@@ -101,6 +103,10 @@ impl Task {
 
     pub fn name(&self) -> &String {
         &self.name
+    }
+
+    pub fn is_completed(&self) -> bool {
+        self.completed
     }
 
     fn verify_id(id: &str) -> Result<(), String> {
