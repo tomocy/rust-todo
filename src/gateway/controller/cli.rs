@@ -18,6 +18,7 @@ impl<'a> App<'a> {
             user_renderer,
         }
     }
+
     pub fn run(&mut self) -> Result<(), String> {
         let args = self.app().get_matches();
         match args.subcommand() {
@@ -27,46 +28,10 @@ impl<'a> App<'a> {
     }
 
     fn run_user_command(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        let mut app = UserApp::new(self.user_repo, self.user_renderer);
         match args.subcommand() {
-            ("create", Some(args)) => {
-                let (email, password) = (
-                    args.value_of("email").unwrap(),
-                    args.value_of("password").unwrap(),
-                );
-                let user = usecase::CreateUser::new(self.user_repo)
-                    .invoke(email, password)
-                    .map_err(|err| format!("failed to create user: {}", err))?;
-
-                self.user_renderer
-                    .render_message("User is successfully created.");
-                self.user_renderer.render_user(&user);
-
-                Ok(())
-            }
-            ("authenticate", Some(args)) => {
-                let (email, password) = (
-                    args.value_of("email").unwrap(),
-                    args.value_of("password").unwrap(),
-                );
-                let user = usecase::AuthenticateUser::new(self.user_repo)
-                    .invoke(email, password)
-                    .map_err(|err| format!("failed to authenticate user: {}", err))?;
-
-                match user {
-                    Some(user) => {
-                        self.user_renderer
-                            .render_message("User is successfully created.");
-                        self.user_renderer.render_user(&user);
-
-                        Ok(())
-                    }
-                    None => {
-                        self.user_renderer.render_error("Invalid credentials.");
-
-                        Ok(())
-                    }
-                }
-            }
+            ("create", Some(args)) => app.create(args),
+            ("authenticate", Some(args)) => app.authenticate(args),
             _ => Err("unknown command".to_string()),
         }
     }
@@ -104,5 +69,60 @@ impl<'a> App<'a> {
                         .takes_value(true),
                 ),
         ])
+    }
+}
+
+struct UserApp<'a> {
+    repo: &'a mut Box<dyn UserRepo>,
+    renderer: &'a Box<dyn super::UserRenderer>,
+}
+
+impl<'a> UserApp<'a> {
+    fn new(
+        repo: &'a mut Box<dyn UserRepo>,
+        renderer: &'a Box<dyn super::UserRenderer>,
+    ) -> UserApp<'a> {
+        UserApp { repo, renderer }
+    }
+
+    fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        let (email, password) = (
+            args.value_of("email").unwrap(),
+            args.value_of("password").unwrap(),
+        );
+        let user = usecase::CreateUser::new(self.repo)
+            .invoke(email, password)
+            .map_err(|err| format!("failed to create user: {}", err))?;
+
+        self.renderer
+            .render_message("User is successfully created.");
+        self.renderer.render_user(&user);
+
+        Ok(())
+    }
+
+    fn authenticate(&self, args: &clap::ArgMatches) -> Result<(), String> {
+        let (email, password) = (
+            args.value_of("email").unwrap(),
+            args.value_of("password").unwrap(),
+        );
+        let user = usecase::AuthenticateUser::new(self.repo)
+            .invoke(email, password)
+            .map_err(|err| format!("failed to authenticate user: {}", err))?;
+
+        match user {
+            Some(user) => {
+                self.renderer
+                    .render_message("User is successfully created.");
+                self.renderer.render_user(&user);
+
+                Ok(())
+            }
+            None => {
+                self.renderer.render_error("Invalid credentials.");
+
+                Ok(())
+            }
+        }
     }
 }
