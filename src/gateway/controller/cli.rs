@@ -43,6 +43,30 @@ impl<'a> App<'a> {
 
                 Ok(())
             }
+            ("authenticate", Some(args)) => {
+                let (email, password) = (
+                    args.value_of("email").unwrap(),
+                    args.value_of("password").unwrap(),
+                );
+                let user = usecase::AuthenticateUser::new(self.user_repo)
+                    .invoke(email, password)
+                    .map_err(|err| format!("failed to authenticate user: {}", err))?;
+
+                match user {
+                    Some(user) => {
+                        self.user_renderer
+                            .render_message("User is successfully created.");
+                        self.user_renderer.render_user(&user);
+
+                        Ok(())
+                    }
+                    None => {
+                        self.user_renderer.render_error("Invalid credentials.");
+
+                        Ok(())
+                    }
+                }
+            }
             _ => Err("unknown command".to_string()),
         }
     }
@@ -52,18 +76,33 @@ impl<'a> App<'a> {
     }
 
     fn user_command<'b, 'c>(&self) -> clap::App<'b, 'c> {
-        clap::SubCommand::with_name("user").subcommands(vec![clap::SubCommand::with_name("create")
-            .arg(
-                clap::Arg::with_name("email")
-                    .required(true)
-                    .long("email")
-                    .takes_value(true),
-            )
-            .arg(
-                clap::Arg::with_name("password")
-                    .required(true)
-                    .long("password")
-                    .takes_value(true),
-            )])
+        clap::SubCommand::with_name("user").subcommands(vec![
+            clap::SubCommand::with_name("create")
+                .arg(
+                    clap::Arg::with_name("email")
+                        .required(true)
+                        .long("email")
+                        .takes_value(true),
+                )
+                .arg(
+                    clap::Arg::with_name("password")
+                        .required(true)
+                        .long("password")
+                        .takes_value(true),
+                ),
+            clap::SubCommand::with_name("authenticate")
+                .arg(
+                    clap::Arg::with_name("email")
+                        .required(true)
+                        .long("email")
+                        .takes_value(true),
+                )
+                .arg(
+                    clap::Arg::with_name("password")
+                        .required(true)
+                        .long("password")
+                        .takes_value(true),
+                ),
+        ])
     }
 }
