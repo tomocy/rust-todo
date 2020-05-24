@@ -1,5 +1,10 @@
 use bcrypt;
 
+pub trait UserRepo {
+    fn next_id(&self) -> Result<String, String>;
+    fn save(&mut self, user: &User) -> Result<(), String>;
+}
+
 pub struct User {
     id: String,
     email: String,
