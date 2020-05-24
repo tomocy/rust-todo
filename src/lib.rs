@@ -109,6 +109,10 @@ impl Task {
         self.completed
     }
 
+    pub fn complete(&mut self) {
+        self.completed = true;
+    }
+
     fn verify_id(id: &str) -> Result<(), String> {
         verify_not_empty(id).map_err(|_| "id should not be empty")?;
 
