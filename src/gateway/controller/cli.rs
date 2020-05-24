@@ -22,16 +22,10 @@ impl<'a> App<'a> {
     pub fn run(&mut self) -> Result<(), String> {
         let args = self.app().get_matches();
         match args.subcommand() {
-            ("user", Some(args)) => self.run_user_command(args),
-            _ => Err("unknown command".to_string()),
-        }
-    }
-
-    fn run_user_command(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
-        let mut app = UserApp::new(self.user_repo, self.user_renderer);
-        match args.subcommand() {
-            ("create", Some(args)) => app.create(args),
-            ("authenticate", Some(args)) => app.authenticate(args),
+            ("user", Some(args)) => {
+                let mut app = UserApp::new(self.user_repo, self.user_renderer);
+                app.run(args)
+            }
             _ => Err("unknown command".to_string()),
         }
     }
@@ -80,6 +74,14 @@ struct UserApp<'a> {
 impl<'a> UserApp<'a> {
     fn new(repo: &'a mut Box<dyn UserRepo>, renderer: &'a Box<dyn super::UserRenderer>) -> Self {
         UserApp { repo, renderer }
+    }
+
+    fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        match args.subcommand() {
+            ("create", Some(args)) => self.create(args),
+            ("authenticate", Some(args)) => self.authenticate(args),
+            _ => Err("unknown command".to_string()),
+        }
     }
 
     fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
