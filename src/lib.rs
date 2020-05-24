@@ -74,21 +74,36 @@ impl Hash {
 #[derive(Debug, Clone)]
 pub struct Task {
     id: String,
+    user_id: String,
 }
 
 impl Task {
-    pub fn new(id: &str) -> Result<Self, String> {
+    pub fn new(id: &str, user_id: &str) -> Result<Self, String> {
         Self::verify_id(id)?;
+        Self::verify_user_id(user_id)?;
 
-        Ok(Task { id: id.to_string() })
+        Ok(Task {
+            id: id.to_string(),
+            user_id: user_id.to_string(),
+        })
     }
 
     pub fn id(&self) -> &String {
         &self.id
     }
 
+    pub fn user_id(&self) -> &String {
+        &self.user_id
+    }
+
     fn verify_id(id: &str) -> Result<(), String> {
         verify_not_empty(id).map_err(|_| "id should not be empty")?;
+
+        Ok(())
+    }
+
+    fn verify_user_id(user_id: &str) -> Result<(), String> {
+        verify_not_empty(user_id).map_err(|_| "user id should not be empty")?;
 
         Ok(())
     }
