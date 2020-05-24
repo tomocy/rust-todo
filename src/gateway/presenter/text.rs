@@ -9,3 +9,13 @@ impl controller::UserRenderer for Text {
         println!("Email: {}", user.email());
     }
 }
+
+impl controller::Renderer for Text {
+    fn render_message(&self, msg: &str) {
+        println!("{}", msg);
+    }
+
+    fn render_error(&self, msg: &str) {
+        eprintln!("{}", msg);
+    }
+}
