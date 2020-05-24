@@ -23,16 +23,21 @@ impl User {
     }
 
     fn verify_id(id: &str) -> Result<(), String> {
-        match id {
-            "" => Err(String::from("id should not be empty")),
-            _ => Ok(()),
-        }
+        verify_not_empty(id).map_err(|_| "id should not be empty")?;
+
+        Ok(())
     }
 
     fn verify_email(email: &str) -> Result<(), String> {
-        match email {
-            "" => Err(String::from("email should not be empty")),
-            _ => Ok(()),
-        }
+        verify_not_empty(email).map_err(|_| "email should not be empty")?;
+
+        Ok(())
+    }
+}
+
+fn verify_not_empty(s: &str) -> Result<(), String> {
+    match s {
+        "" => Err(String::from("empty")),
+        _ => Ok(()),
     }
 }
