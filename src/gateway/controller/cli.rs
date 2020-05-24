@@ -37,6 +37,8 @@ impl<'a> App<'a> {
                     .invoke(email, password)
                     .map_err(|err| format!("failed to create user: {}", err))?;
 
+                self.user_renderer
+                    .render_message("User is successfully created.");
                 self.user_renderer.render_user(&user);
 
                 Ok(())
