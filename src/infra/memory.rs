@@ -1,3 +1,4 @@
+use super::super::User;
 use std::collections::HashMap;
 
 pub struct UserRepo {
@@ -17,7 +18,18 @@ impl super::super::UserRepo for UserRepo {
         Ok(super::rand::generate_string(50))
     }
 
-    fn save(&mut self, user: &super::super::User) -> Result<(), String> {
+    fn find_by_email(&self, email: &str) -> Result<Option<User>, String> {
+        for (_, user) in &self.users {
+            if user.email() == email {
+                return Ok(Some(user.clone()));
+            }
+        }
+
+        Ok(None)
+    }
+
+    fn save(&mut self, user: &User) -> Result<(), String> {
         self.users.insert(user.id().clone(), user.clone());
         Ok(())
-    }}
+    }
+}
