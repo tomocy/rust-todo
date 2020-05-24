@@ -10,7 +10,7 @@ pub trait UserRepo {
     fn save(&mut self, user: &User) -> Result<(), String>;
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct User {
     id: String,
     email: String,
@@ -23,8 +23,8 @@ impl User {
         Self::verify_email(email)?;
 
         Ok(User {
-            id: String::from(id),
-            email: String::from(email),
+            id: id.to_string(),
+            email: email.to_string(),
             password: password.clone(),
         })
     }
@@ -54,7 +54,7 @@ impl User {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Hash(String);
 
 impl Hash {
