@@ -71,6 +71,29 @@ impl Hash {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Task {
+    id: String,
+}
+
+impl Task {
+    pub fn new(id: &str) -> Result<Self, String> {
+        Self::verify_id(id)?;
+
+        Ok(Task { id: id.to_string() })
+    }
+
+    pub fn id(&self) -> &String {
+        &self.id
+    }
+
+    fn verify_id(id: &str) -> Result<(), String> {
+        verify_not_empty(id).map_err(|_| "id should not be empty")?;
+
+        Ok(())
+    }
+}
+
 fn verify_not_empty(s: &str) -> Result<(), String> {
     match s {
         "" => Err(String::from("empty")),
