@@ -71,6 +71,11 @@ impl Hash {
     }
 }
 
+pub trait TaskRepo {
+    fn next_id(&self) -> Result<String, String>;
+    fn save(&mut self, task: &Task) -> Result<(), String>;
+}
+
 #[derive(Debug, Clone)]
 pub struct Task {
     id: String,
