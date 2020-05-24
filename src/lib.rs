@@ -1,5 +1,6 @@
 use bcrypt;
 
+pub mod infra;
 pub mod usecase;
 
 pub trait UserRepo {
@@ -7,6 +8,7 @@ pub trait UserRepo {
     fn save(&mut self, user: &User) -> Result<(), String>;
 }
 
+#[derive(Clone)]
 pub struct User {
     id: String,
     email: String,
