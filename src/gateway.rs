@@ -13,11 +13,18 @@ pub mod controller {
 
         pub struct App<'a> {
             user_repo: &'a mut Box<dyn UserRepo>,
+            user_renderer: &'a Box<dyn super::UserRenderer>,
         }
 
         impl<'a> App<'a> {
-            pub fn new(user_repo: &'a mut Box<dyn UserRepo>) -> App<'a> {
-                App { user_repo }
+            pub fn new(
+                user_repo: &'a mut Box<dyn UserRepo>,
+                user_renderer: &'a Box<dyn super::UserRenderer>,
+            ) -> App<'a> {
+                App {
+                    user_repo,
+                    user_renderer,
+                }
             }
             pub fn run(&mut self) -> Result<(), String> {
                 let args = self.app().get_matches();
@@ -36,7 +43,9 @@ pub mod controller {
                         );
                         let user = usecase::CreateUser::new(self.user_repo)
                             .invoke(email, password)
-                            .map_err(|err| format!("failed to create user: {}", err));
+                            .map_err(|err| format!("failed to create user: {}", err))?;
+
+                        self.user_renderer.render_user(&user);
 
                         Ok(())
                     }
