@@ -12,7 +12,7 @@ impl<'a> App<'a> {
     pub fn new(
         user_repo: &'a mut Box<dyn UserRepo>,
         user_renderer: &'a Box<dyn super::UserRenderer>,
-    ) -> App<'a> {
+    ) -> Self {
         App {
             user_repo,
             user_renderer,
@@ -78,10 +78,7 @@ struct UserApp<'a> {
 }
 
 impl<'a> UserApp<'a> {
-    fn new(
-        repo: &'a mut Box<dyn UserRepo>,
-        renderer: &'a Box<dyn super::UserRenderer>,
-    ) -> UserApp<'a> {
+    fn new(repo: &'a mut Box<dyn UserRepo>, renderer: &'a Box<dyn super::UserRenderer>) -> Self {
         UserApp { repo, renderer }
     }
 

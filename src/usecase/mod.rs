@@ -3,7 +3,7 @@ pub struct CreateUser<'a> {
 }
 
 impl<'a> CreateUser<'a> {
-    pub fn new(repo: &'a mut Box<dyn super::UserRepo>) -> CreateUser<'a> {
+    pub fn new(repo: &'a mut Box<dyn super::UserRepo>) -> Self {
         CreateUser { repo: repo }
     }
 
@@ -23,7 +23,7 @@ pub struct AuthenticateUser<'a> {
 }
 
 impl<'a> AuthenticateUser<'a> {
-    pub fn new(repo: &'a Box<dyn super::UserRepo>) -> AuthenticateUser {
+    pub fn new(repo: &'a Box<dyn super::UserRepo>) -> Self {
         AuthenticateUser { repo }
     }
 

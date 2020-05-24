@@ -18,7 +18,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(id: &str, email: &str, password: &Hash) -> Result<User, String> {
+    pub fn new(id: &str, email: &str, password: &Hash) -> Result<Self, String> {
         Self::verify_id(id)?;
         Self::verify_email(email)?;
 
@@ -58,7 +58,7 @@ impl User {
 pub struct Hash(String);
 
 impl Hash {
-    pub fn new(plain: &str) -> Result<Hash, String> {
+    pub fn new(plain: &str) -> Result<Self, String> {
         verify_not_empty(plain)?;
 
         let hashed = bcrypt::hash(plain, bcrypt::DEFAULT_COST).map_err(|err| err.to_string())?;

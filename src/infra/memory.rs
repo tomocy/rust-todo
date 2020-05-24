@@ -6,7 +6,7 @@ pub struct UserRepo {
 }
 
 impl UserRepo {
-    pub fn new() -> UserRepo {
+    pub fn new() -> Self {
         UserRepo {
             users: HashMap::new(),
         }
