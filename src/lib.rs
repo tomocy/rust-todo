@@ -1,3 +1,5 @@
+use bcrypt;
+
 pub struct User {
     id: String,
     email: String,
@@ -32,6 +34,23 @@ impl User {
         verify_not_empty(email).map_err(|_| "email should not be empty")?;
 
         Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct Hash(String);
+
+impl Hash {
+    pub fn new(plain: &str) -> Result<Hash, String> {
+        verify_not_empty(plain)?;
+
+        let hashed = bcrypt::hash(plain, bcrypt::DEFAULT_COST).map_err(|err| err.to_string())?;
+        Ok(Hash(hashed))
+    }
+
+    pub fn verify(&self, plain: &str) -> Result<bool, String> {
+        let valid = bcrypt::verify(plain, &self.0).map_err(|err| err.to_string())?;
+        Ok(valid)
     }
 }
 
