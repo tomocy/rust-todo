@@ -71,6 +71,12 @@ impl Hash {
     }
 }
 
+impl From<String> for Hash {
+    fn from(hash: String) -> Self {
+        Hash(hash)
+    }
+}
+
 pub trait TaskRepo {
     fn next_id(&self) -> Result<String, String>;
     fn save(&mut self, task: &Task) -> Result<(), String>;
