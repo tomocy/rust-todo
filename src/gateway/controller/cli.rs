@@ -82,13 +82,19 @@ impl<'a> App<'a> {
 
     fn task_command<'b, 'c>(&self) -> clap::App<'b, 'c> {
         clap::SubCommand::with_name("task").subcommands(vec![
+            clap::SubCommand::with_name("get"),
             clap::SubCommand::with_name("create").arg(
                 clap::Arg::with_name("name")
                     .required(true)
                     .long("name")
                     .takes_value(true),
             ),
-            clap::SubCommand::with_name("get"),
+            clap::SubCommand::with_name("complete").arg(
+                clap::Arg::with_name("id")
+                    .required(true)
+                    .long("id")
+                    .takes_value(true),
+            ),
             clap::SubCommand::with_name("delete").arg(
                 clap::Arg::with_name("id")
                     .required(true)
@@ -195,8 +201,9 @@ impl<'a> TaskApp<'a> {
 
     fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         match args.subcommand() {
-            ("create", Some(args)) => self.create(args),
             ("get", Some(_)) => self.get(),
+            ("create", Some(args)) => self.create(args),
+            ("complete", Some(args)) => self.complete(args),
             ("delete", Some(args)) => self.delete(args),
             _ => Err("unknown command".to_string()),
         }
@@ -234,6 +241,23 @@ impl<'a> TaskApp<'a> {
 
         self.renderer
             .render_message("Task is successfully created.");
+        self.renderer.render_task(&task);
+
+        Ok(())
+    }
+
+    fn complete(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        let user_id = match self.session_manager.pop_authenticated_user_id()? {
+            Some(user_id) => user_id,
+            None => {
+                self.renderer.render_error("authentication is required.");
+                return Ok(());
+            }
+        };
+        let id = args.value_of("id").unwrap();
+        let task = usecase::CompleteTask::new(&mut self.repo).invoke(id, &user_id)?;
+
+        self.renderer.render_message("The task is completed.");
         self.renderer.render_task(&task);
 
         Ok(())
