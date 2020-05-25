@@ -195,9 +195,13 @@ impl<'a> TaskApp<'a> {
     fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         let user_id = self.pop_authenticated_user_id()?;
         let name = args.value_of("name").unwrap();
-        let _task = usecase::CreateTask::new(self.repo)
+        let task = usecase::CreateTask::new(self.repo)
             .invoke(&user_id, name)
             .map_err(|err| format!("failed to create task: {}", err))?;
+
+        self.renderer
+            .render_message("Task is successfully created.");
+        self.renderer.render_task(&task);
 
         Ok(())
     }
