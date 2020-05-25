@@ -81,13 +81,15 @@ impl<'a> App<'a> {
     }
 
     fn task_command<'b, 'c>(&self) -> clap::App<'b, 'c> {
-        clap::SubCommand::with_name("task").subcommands(vec![clap::SubCommand::with_name("create")
-            .arg(
+        clap::SubCommand::with_name("task").subcommands(vec![
+            clap::SubCommand::with_name("create").arg(
                 clap::Arg::with_name("name")
                     .required(true)
                     .long("name")
                     .takes_value(true),
-            )])
+            ),
+            clap::SubCommand::with_name("get"),
+        ])
     }
 }
 
@@ -188,8 +190,28 @@ impl<'a> TaskApp<'a> {
     fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         match args.subcommand() {
             ("create", Some(args)) => self.create(args),
+            ("get", Some(_)) => self.get(),
             _ => Err("unknown command".to_string()),
         }
+    }
+
+    fn get(&self) -> Result<(), String> {
+        let user_id = match self.session_manager.pop_authenticated_user_id()? {
+            Some(user_id) => user_id,
+            None => {
+                self.renderer.render_error("authentication is required.");
+                return Ok(());
+            }
+        };
+        let tasks = usecase::GetTasks::new(self.repo)
+            .invoke(&user_id)
+            .map_err(|err| format!("failed to get tasks: {}", err))?;
+
+        for task in &tasks {
+            self.renderer.render_task(task);
+        }
+
+        Ok(())
     }
 
     fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
