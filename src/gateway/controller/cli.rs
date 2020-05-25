@@ -64,7 +64,7 @@ impl<'a> App<'a> {
                         .long("password")
                         .takes_value(true),
                 ),
-            clap::SubCommand::with_name("authenticate")
+            clap::SubCommand::with_name("login")
                 .arg(
                     clap::Arg::with_name("email")
                         .required(true)
@@ -77,7 +77,7 @@ impl<'a> App<'a> {
                         .long("password")
                         .takes_value(true),
                 ),
-            clap::SubCommand::with_name("deauthenticate"),
+            clap::SubCommand::with_name("logout"),
         ])
     }
 
@@ -128,8 +128,8 @@ impl<'a> UserApp<'a> {
     fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         match args.subcommand() {
             ("create", Some(args)) => self.create(args),
-            ("authenticate", Some(args)) => self.authenticate(args),
-            ("deauthenticate", Some(_)) => self.deauthenticate(),
+            ("login", Some(args)) => self.authenticate(args),
+            ("logout", Some(_)) => self.deauthenticate(),
             _ => Err("unknown command".to_string()),
         }
     }
@@ -168,7 +168,8 @@ impl<'a> UserApp<'a> {
                     .push_authenticated_user_id(&user.id())?;
 
                 self.renderer
-                    .render_message("User is successfully created.");
+                    .render_message("You are succefully logged in.");
+                self.renderer.render_message("Take it easy!");
                 self.renderer.render_user(&user);
 
                 Ok(())
