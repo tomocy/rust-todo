@@ -53,6 +53,19 @@ impl DomainTaskRepo for TaskRepo {
         Ok(super::rand::generate_string(70))
     }
 
+    fn get(&self, user_id: &str) -> Result<Vec<Task>, String> {
+        let mut tasks = Vec::new();
+        for (_, task) in &self.tasks {
+            if task.user_id() != user_id {
+                continue;
+            }
+
+            tasks.push(task.clone());
+        }
+
+        Ok(tasks)
+    }
+
     fn save(&mut self, task: &Task) -> Result<(), String> {
         self.tasks.insert(task.id().clone(), task.clone());
         Ok(())
