@@ -44,15 +44,17 @@ impl User {
     }
 
     fn verify_id(id: &str) -> Result<(), Box<dyn error::Error>> {
-        verify_not_empty(id).map_err(|_| "id should not be empty")?;
-
-        Ok(())
+        match verify_not_empty(id) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(From::from("id id should not be empty")),
+        }
     }
 
     fn verify_email(email: &str) -> Result<(), Box<dyn error::Error>> {
-        verify_not_empty(email).map_err(|_| "email should not be empty")?;
-
-        Ok(())
+        match verify_not_empty(email) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(From::from("email id should not be empty")),
+        }
     }
 }
 
@@ -61,15 +63,22 @@ pub struct Hash(String);
 
 impl Hash {
     pub fn new(plain: &str) -> Result<Self, Box<dyn error::Error>> {
-        verify_not_empty(plain)?;
+        Self::verify_plain_password(plain)?;
 
-        let hashed = bcrypt::hash(plain, bcrypt::DEFAULT_COST).map_err(|err| err.to_string())?;
+        let hashed = bcrypt::hash(plain, bcrypt::DEFAULT_COST)?;
         Ok(Self(hashed))
     }
 
     pub fn verify(&self, plain: &str) -> Result<bool, Box<dyn error::Error>> {
-        let valid = bcrypt::verify(plain, &self.0).map_err(|err| err.to_string())?;
+        let valid = bcrypt::verify(plain, &self.0)?;
         Ok(valid)
+    }
+
+    fn verify_plain_password(plain: &str) -> Result<(), Box<dyn error::Error>> {
+        match verify_not_empty(plain) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(From::from("plain password should not be empty")),
+        }
     }
 }
 
@@ -131,21 +140,24 @@ impl Task {
     }
 
     fn verify_id(id: &str) -> Result<(), Box<dyn error::Error>> {
-        verify_not_empty(id).map_err(|_| "id should not be empty")?;
-
-        Ok(())
+        match verify_not_empty(id) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(From::from("id should not be empty")),
+        }
     }
 
     fn verify_user_id(user_id: &str) -> Result<(), Box<dyn error::Error>> {
-        verify_not_empty(user_id).map_err(|_| "user id should not be empty")?;
-
-        Ok(())
+        match verify_not_empty(user_id) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(From::from("user id should not be empty")),
+        }
     }
 
     fn verify_name(name: &str) -> Result<(), Box<dyn error::Error>> {
-        verify_not_empty(name).map_err(|_| "name id should not be empty")?;
-
-        Ok(())
+        match verify_not_empty(name) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(From::from("name should not be empty")),
+        }
     }
 }
 
