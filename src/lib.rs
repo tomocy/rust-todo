@@ -81,6 +81,7 @@ pub trait TaskRepo {
     fn next_id(&self) -> Result<String, String>;
     fn get(&self, user_id: &str) -> Result<Vec<Task>, String>;
     fn save(&mut self, task: &Task) -> Result<(), String>;
+    fn delete(&mut self, id: &str) -> Result<(), String>;
 }
 
 #[derive(Debug, Clone, PartialEq)]
