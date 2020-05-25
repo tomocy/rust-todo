@@ -119,6 +119,19 @@ impl Task {
         })
     }
 
+    pub fn recover(id: &str, user_id: &str, name: &str, completed: bool) -> Self {
+        Self::verify_id(id).unwrap();
+        Self::verify_user_id(user_id).unwrap();
+        Self::verify_name(name).unwrap();
+
+        Self {
+            id: id.to_string(),
+            user_id: user_id.to_string(),
+            name: name.to_string(),
+            completed: completed,
+        }
+    }
+
     pub fn id(&self) -> &String {
         &self.id
     }

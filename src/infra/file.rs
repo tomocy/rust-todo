@@ -266,7 +266,11 @@ struct User {
 
 impl From<User> for DomainUser {
     fn from(user: User) -> Self {
-        DomainUser::new(&user.id, &user.email, &Hash::from(user.password)).unwrap()
+        DomainUser {
+            id: user.id,
+            email: user.email,
+            password: Hash::from(user.password),
+        }
     }
 }
 
@@ -290,7 +294,12 @@ struct Task {
 
 impl From<Task> for DomainTask {
     fn from(task: Task) -> Self {
-        DomainTask::new(&task.id, &task.user_id, &task.name).unwrap()
+        DomainTask {
+            id: task.id,
+            user_id: task.user_id,
+            name: task.name,
+            completed: task.completed,
+        }
     }
 }
 
