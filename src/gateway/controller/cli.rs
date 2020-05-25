@@ -77,7 +77,13 @@ impl<'a> App<'a> {
     }
 
     fn task_command<'b, 'c>(&self) -> clap::App<'b, 'c> {
-        clap::SubCommand::with_name("task")
+        clap::SubCommand::with_name("task").subcommands(vec![clap::SubCommand::with_name("create")
+            .arg(
+                clap::Arg::with_name("name")
+                    .required(true)
+                    .long("name")
+                    .takes_value(true),
+            )])
     }
 }
 
@@ -173,8 +179,19 @@ impl<'a> TaskApp<'a> {
     }
 
     fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
-        match args.subcommand {
+        match args.subcommand() {
+            ("create", Some(args)) => self.create(args),
             _ => Err("unknown command".to_string()),
         }
+    }
+
+    fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        let user_id = self.session_manager.pop_authenticated_user_id()?;
+        let name = args.value_of("name").unwrap();
+        let _task = usecase::CreateTask::new(self.repo)
+            .invoke(&user_id, name)
+            .map_err(|err| format!("failed to create task: {}", err))?;
+
+        Ok(())
     }
 }
