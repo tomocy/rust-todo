@@ -5,6 +5,7 @@ use super::super::super::{TaskRepo, UserRepo};
 
 pub struct App<'a> {
     user_repo: &'a mut Box<dyn UserRepo>,
+    task_repo: &'a mut Box<dyn TaskRepo>,
     user_renderer: &'a Box<dyn super::UserRenderer>,
     session_manager: &'a mut Box<dyn super::SessionManager>,
 }
@@ -12,11 +13,13 @@ pub struct App<'a> {
 impl<'a> App<'a> {
     pub fn new(
         user_repo: &'a mut Box<dyn UserRepo>,
+        task_repo: &'a mut Box<dyn TaskRepo>,
         user_renderer: &'a Box<dyn super::UserRenderer>,
         session_manager: &'a mut Box<dyn super::SessionManager>,
     ) -> Self {
         App {
             user_repo,
+            task_repo,
             user_renderer,
             session_manager,
         }
@@ -30,12 +33,16 @@ impl<'a> App<'a> {
                     UserApp::new(self.user_repo, self.user_renderer, self.session_manager);
                 app.run(args)
             }
+            ("task", Some(args)) => {
+                let mut app = TaskApp::new(self.task_repo, self.session_manager);
+                app.run(args)
+            }
             _ => Err("unknown command".to_string()),
         }
     }
 
     fn app<'b, 'c>(&self) -> clap::App<'b, 'c> {
-        clap::App::new("todo").subcommands(vec![self.user_command()])
+        clap::App::new("todo").subcommands(vec![self.user_command(), self.task_command()])
     }
 
     fn user_command<'b, 'c>(&self) -> clap::App<'b, 'c> {
@@ -67,6 +74,10 @@ impl<'a> App<'a> {
                         .takes_value(true),
                 ),
         ])
+    }
+
+    fn task_command<'b, 'c>(&self) -> clap::App<'b, 'c> {
+        clap::SubCommand::with_name("task")
     }
 }
 
