@@ -8,6 +8,7 @@ pub trait UserRepo {
     fn next_id(&self) -> Result<String, String>;
     fn find_by_email(&self, email: &str) -> Result<Option<User>, String>;
     fn save(&mut self, user: &User) -> Result<(), String>;
+    fn delete(&mut self, id: &str) -> Result<(), String>;
 }
 
 #[derive(Debug, Clone, PartialEq)]
