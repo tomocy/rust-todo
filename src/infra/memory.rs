@@ -92,4 +92,18 @@ impl DomainTaskRepo for TaskRepo {
         self.tasks.remove(id);
         Ok(())
     }
+
+    fn delete_of_user(&mut self, user_id: &str) -> Result<(), String> {
+        let ids: Vec<String> = self
+            .tasks
+            .values()
+            .filter(|task| task.user_id() == user_id)
+            .map(|task| task.id.clone())
+            .collect();
+        for id in ids {
+            self.tasks.remove(&id);
+        }
+
+        Ok(())
+    }
 }
