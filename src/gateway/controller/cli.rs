@@ -31,20 +31,8 @@ impl<'a> App<'a> {
     pub fn run(&mut self) -> Result<(), String> {
         let args = self.app().get_matches();
         match args.subcommand() {
-            ("user", Some(args)) => {
-                let mut app = UserApp::new(
-                    self.user_repo,
-                    self.task_repo,
-                    self.user_renderer,
-                    self.session_manager,
-                );
-                app.run(args)
-            }
-            ("task", Some(args)) => {
-                let mut app =
-                    TaskApp::new(self.task_repo, self.task_renderer, self.session_manager);
-                app.run(args)
-            }
+            ("user", Some(args)) => self.run_user_command(args),
+            ("task", Some(args)) => self.run_task_command(args),
             _ => Err("unknown command".to_string()),
         }
     }
@@ -111,63 +99,42 @@ impl<'a> App<'a> {
     }
 }
 
-struct UserApp<'a> {
-    repo: &'a mut Box<dyn UserRepo>,
-    task_repo: &'a mut Box<dyn TaskRepo>,
-    renderer: &'a Box<dyn super::UserRenderer>,
-    session_manager: &'a mut Box<dyn super::SessionManager>,
-}
-
-impl<'a> UserApp<'a> {
-    fn new(
-        repo: &'a mut Box<dyn UserRepo>,
-        task_repo: &'a mut Box<dyn TaskRepo>,
-        renderer: &'a Box<dyn super::UserRenderer>,
-        session_manager: &'a mut Box<dyn super::SessionManager>,
-    ) -> Self {
-        UserApp {
-            repo,
-            task_repo,
-            renderer,
-            session_manager,
-        }
-    }
-
-    fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+impl<'a> App<'a> {
+    fn run_user_command(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         match args.subcommand() {
-            ("create", Some(args)) => self.create(args),
-            ("login", Some(args)) => self.authenticate(args),
-            ("logout", Some(_)) => self.deauthenticate(),
-            ("delete", Some(_)) => self.delete(),
+            ("create", Some(args)) => self.create_user(args),
+            ("login", Some(args)) => self.authenticate_user(args),
+            ("logout", Some(_)) => self.deauthenticate_user(),
+            ("delete", Some(_)) => self.delete_user(),
             _ => Err("unknown command".to_string()),
         }
     }
 
-    fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn create_user(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         let (email, password) = (
             args.value_of("email").unwrap(),
             args.value_of("password").unwrap(),
         );
-        let user = usecase::CreateUser::new(self.repo)
+        let user = usecase::CreateUser::new(self.user_repo)
             .invoke(email, password)
             .map_err(|err| format!("failed to create user: {}", err))?;
 
         self.session_manager
             .push_authenticated_user_id(&user.id())?;
 
-        self.renderer
+        self.user_renderer
             .render_message("User is successfully created.");
-        self.renderer.render_user(&user);
+        self.user_renderer.render_user(&user);
 
         Ok(())
     }
 
-    fn authenticate(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn authenticate_user(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         let (email, password) = (
             args.value_of("email").unwrap(),
             args.value_of("password").unwrap(),
         );
-        let user = usecase::AuthenticateUser::new(self.repo)
+        let user = usecase::AuthenticateUser::new(self.user_repo)
             .invoke(email, password)
             .map_err(|err| format!("failed to authenticate user: {}", err))?;
 
@@ -176,143 +143,130 @@ impl<'a> UserApp<'a> {
                 self.session_manager
                     .push_authenticated_user_id(&user.id())?;
 
-                self.renderer
+                self.user_renderer
                     .render_message("You are succefully logged in.");
-                self.renderer.render_message("Take it easy!");
-                self.renderer.render_user(&user);
+                self.user_renderer.render_message("Take it easy!");
+                self.user_renderer.render_user(&user);
 
                 Ok(())
             }
             None => {
-                self.renderer.render_error("Invalid credentials.");
+                self.user_renderer.render_error("Invalid credentials.");
 
                 Ok(())
             }
         }
     }
 
-    fn deauthenticate(&mut self) -> Result<(), String> {
+    fn deauthenticate_user(&mut self) -> Result<(), String> {
         self.session_manager.drop_authenticated_user_id()?;
-        self.renderer
+        self.user_renderer
             .render_message("You are successfully logged out.");
-        self.renderer.render_message("See you later!");
+        self.user_renderer.render_message("See you later!");
 
         Ok(())
     }
 
-    fn delete(&mut self) -> Result<(), String> {
+    fn delete_user(&mut self) -> Result<(), String> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
-                self.renderer.render_error("authentication is required.");
+                self.user_renderer
+                    .render_error("authentication is required.");
                 return Ok(());
             }
         };
 
         self.session_manager.drop_authenticated_user_id()?;
-        usecase::DeleteUser::new(&mut self.repo, &mut self.task_repo).invoke(&user_id)?;
+        usecase::DeleteUser::new(&mut self.user_repo, &mut self.task_repo).invoke(&user_id)?;
 
-        self.renderer
+        self.user_renderer
             .render_message("Your data are completed deleted.");
-        self.renderer.render_message("Take care of yourself.");
+        self.user_renderer.render_message("Take care of yourself.");
 
         Ok(())
     }
 }
 
-struct TaskApp<'a> {
-    repo: &'a mut Box<dyn TaskRepo>,
-    renderer: &'a Box<dyn super::TaskRenderer>,
-    session_manager: &'a Box<dyn super::SessionManager>,
-}
-
-impl<'a> TaskApp<'a> {
-    fn new(
-        repo: &'a mut Box<dyn TaskRepo>,
-        renderer: &'a Box<dyn super::TaskRenderer>,
-        session_manager: &'a mut Box<dyn super::SessionManager>,
-    ) -> Self {
-        TaskApp {
-            repo,
-            renderer,
-            session_manager,
-        }
-    }
-
-    fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+impl<'a> App<'a> {
+    fn run_task_command(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         match args.subcommand() {
-            ("get", Some(_)) => self.get(),
-            ("create", Some(args)) => self.create(args),
-            ("complete", Some(args)) => self.complete(args),
-            ("delete", Some(args)) => self.delete(args),
+            ("get", Some(_)) => self.get_tasks(),
+            ("create", Some(args)) => self.create_task(args),
+            ("complete", Some(args)) => self.complete_task(args),
+            ("delete", Some(args)) => self.delete_task(args),
             _ => Err("unknown command".to_string()),
         }
     }
 
-    fn get(&self) -> Result<(), String> {
+    fn get_tasks(&self) -> Result<(), String> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
-                self.renderer.render_error("authentication is required.");
+                self.task_renderer
+                    .render_error("authentication is required.");
                 return Ok(());
             }
         };
-        let tasks = usecase::GetTasks::new(self.repo)
+        let tasks = usecase::GetTasks::new(self.task_repo)
             .invoke(&user_id)
             .map_err(|err| format!("failed to get tasks: {}", err))?;
 
-        self.renderer.render_tasks(&tasks);
+        self.task_renderer.render_tasks(&tasks);
 
         Ok(())
     }
 
-    fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn create_task(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
-                self.renderer.render_error("authentication is required.");
+                self.task_renderer
+                    .render_error("authentication is required.");
                 return Ok(());
             }
         };
         let name = args.value_of("name").unwrap();
-        let task = usecase::CreateTask::new(self.repo)
+        let task = usecase::CreateTask::new(self.task_repo)
             .invoke(&user_id, name)
             .map_err(|err| format!("failed to create task: {}", err))?;
 
-        self.renderer
+        self.task_renderer
             .render_message("Task is successfully created.");
-        self.renderer.render_task(&task);
+        self.task_renderer.render_task(&task);
 
         Ok(())
     }
 
-    fn complete(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn complete_task(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
-                self.renderer.render_error("authentication is required.");
+                self.task_renderer
+                    .render_error("authentication is required.");
                 return Ok(());
             }
         };
         let id = args.value_of("id").unwrap();
-        let task = usecase::CompleteTask::new(&mut self.repo).invoke(id, &user_id)?;
+        let task = usecase::CompleteTask::new(&mut self.task_repo).invoke(id, &user_id)?;
 
-        self.renderer.render_message("The task is completed.");
-        self.renderer.render_task(&task);
+        self.task_renderer.render_message("The task is completed.");
+        self.task_renderer.render_task(&task);
 
         Ok(())
     }
 
-    fn delete(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn delete_task(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         if let None = self.session_manager.pop_authenticated_user_id()? {
-            self.renderer.render_error("authentication is required.");
+            self.task_renderer
+                .render_error("authentication is required.");
             return Ok(());
         }
 
         let id = args.value_of("id").unwrap();
-        usecase::DeleteTask::new(&mut self.repo).invoke(id)?;
+        usecase::DeleteTask::new(&mut self.task_repo).invoke(id)?;
 
-        self.renderer
+        self.task_renderer
             .render_message("The task is successfully deleted.");
 
         Ok(())
