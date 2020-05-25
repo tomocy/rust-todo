@@ -117,12 +117,14 @@ impl File {
 #[derive(Serialize, Deserialize)]
 struct Store {
     users: HashMap<String, User>,
+    session: Session,
 }
 
 impl Store {
     fn new() -> Self {
         Store {
             users: HashMap::new(),
+            session: Session::new(),
         }
     }
 }
@@ -146,6 +148,19 @@ impl From<DomainUser> for User {
             id: user.id().clone(),
             email: user.email().clone(),
             password: user.password().clone().0,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct Session {
+    authenticated_user_id: String,
+}
+
+impl Session {
+    fn new() -> Self {
+        Session {
+            authenticated_user_id: String::new(),
         }
     }
 }
