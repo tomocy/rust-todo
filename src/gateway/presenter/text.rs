@@ -22,6 +22,14 @@ impl controller::TaskRenderer for Text {
         println!("ID: {}", task.id());
         println!("User ID: {}", task.user_id());
         println!("Name: {}", task.name());
+        println!(
+            "Status: {}",
+            if task.is_completed() {
+                "Completed"
+            } else {
+                "Not Completed"
+            }
+        );
     }
 }
 

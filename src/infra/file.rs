@@ -234,6 +234,7 @@ struct Task {
     id: String,
     user_id: String,
     name: String,
+    completed: bool,
 }
 
 impl From<Task> for DomainTask {
@@ -248,6 +249,7 @@ impl From<DomainTask> for Task {
             id: task.id().clone(),
             user_id: task.user_id().clone(),
             name: task.name().clone(),
+            completed: task.is_completed(),
         }
     }
 }
