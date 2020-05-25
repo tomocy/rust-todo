@@ -84,6 +84,7 @@ pub trait TaskRepo {
     fn find_of_user(&self, id: &str, user_id: &str) -> Result<Option<Task>, String>;
     fn save(&mut self, task: &Task) -> Result<(), String>;
     fn delete(&mut self, id: &str) -> Result<(), String>;
+    fn delete_of_user(&mut self, user_id: &str) -> Result<(), String>;
 }
 
 #[derive(Debug, Clone, PartialEq)]
