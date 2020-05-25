@@ -1,3 +1,5 @@
+pub mod cli;
+
 use super::super::{Task, User};
 
 pub trait UserRenderer: Renderer {
@@ -19,5 +21,3 @@ pub trait SessionManager {
     fn pop_authenticated_user_id(&self) -> Result<Option<String>, String>;
     fn drop_authenticated_user_id(&mut self) -> Result<(), String>;
 }
-
-pub mod cli;

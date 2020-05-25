@@ -1,8 +1,8 @@
-use bcrypt;
-
 pub mod gateway;
 pub mod infra;
 pub mod usecase;
+
+use bcrypt;
 
 pub trait UserRepo {
     fn next_id(&self) -> Result<String, String>;
@@ -23,7 +23,7 @@ impl User {
         Self::verify_id(id)?;
         Self::verify_email(email)?;
 
-        Ok(User {
+        Ok(Self {
             id: id.to_string(),
             email: email.to_string(),
             password: password.clone(),
@@ -63,7 +63,7 @@ impl Hash {
         verify_not_empty(plain)?;
 
         let hashed = bcrypt::hash(plain, bcrypt::DEFAULT_COST).map_err(|err| err.to_string())?;
-        Ok(Hash(hashed))
+        Ok(Self(hashed))
     }
 
     pub fn verify(&self, plain: &str) -> Result<bool, String> {
@@ -74,7 +74,7 @@ impl Hash {
 
 impl From<String> for Hash {
     fn from(hash: String) -> Self {
-        Hash(hash)
+        Self(hash)
     }
 }
 
@@ -101,7 +101,7 @@ impl Task {
         Self::verify_user_id(user_id)?;
         Self::verify_name(name)?;
 
-        Ok(Task {
+        Ok(Self {
             id: id.to_string(),
             user_id: user_id.to_string(),
             name: name.to_string(),

@@ -1,16 +1,18 @@
+use super::*;
+
 pub struct CreateUser<'a> {
-    repo: &'a mut Box<dyn super::UserRepo>,
+    repo: &'a mut Box<dyn UserRepo>,
 }
 
 impl<'a> CreateUser<'a> {
-    pub fn new(repo: &'a mut Box<dyn super::UserRepo>) -> Self {
-        CreateUser { repo: repo }
+    pub fn new(repo: &'a mut Box<dyn UserRepo>) -> Self {
+        Self { repo: repo }
     }
 
-    pub fn invoke(&mut self, email: &str, password: &str) -> Result<super::User, String> {
+    pub fn invoke(&mut self, email: &str, password: &str) -> Result<User, String> {
         let id = self.repo.next_id()?;
-        let password = super::Hash::new(password)?;
-        let user = super::User::new(&id, email, &password)?;
+        let password = Hash::new(password)?;
+        let user = User::new(&id, email, &password)?;
 
         self.repo.save(&user)?;
 
@@ -19,15 +21,15 @@ impl<'a> CreateUser<'a> {
 }
 
 pub struct AuthenticateUser<'a> {
-    repo: &'a Box<dyn super::UserRepo>,
+    repo: &'a Box<dyn UserRepo>,
 }
 
 impl<'a> AuthenticateUser<'a> {
-    pub fn new(repo: &'a Box<dyn super::UserRepo>) -> Self {
-        AuthenticateUser { repo }
+    pub fn new(repo: &'a Box<dyn UserRepo>) -> Self {
+        Self { repo }
     }
 
-    pub fn invoke(&self, email: &str, password: &str) -> Result<Option<super::User>, String> {
+    pub fn invoke(&self, email: &str, password: &str) -> Result<Option<User>, String> {
         let user = self.repo.find_by_email(email)?;
         match user {
             Some(user) if user.password().verify(password)? => Ok(Some(user)),
@@ -37,15 +39,12 @@ impl<'a> AuthenticateUser<'a> {
 }
 
 pub struct DeleteUser<'a> {
-    user_repo: &'a mut Box<dyn super::UserRepo>,
-    task_repo: &'a mut Box<dyn super::TaskRepo>,
+    user_repo: &'a mut Box<dyn UserRepo>,
+    task_repo: &'a mut Box<dyn TaskRepo>,
 }
 
 impl<'a> DeleteUser<'a> {
-    pub fn new(
-        user_repo: &'a mut Box<dyn super::UserRepo>,
-        task_repo: &'a mut Box<dyn super::TaskRepo>,
-    ) -> Self {
+    pub fn new(user_repo: &'a mut Box<dyn UserRepo>, task_repo: &'a mut Box<dyn TaskRepo>) -> Self {
         Self {
             user_repo,
             task_repo,
@@ -59,31 +58,31 @@ impl<'a> DeleteUser<'a> {
 }
 
 pub struct GetTasks<'a> {
-    repo: &'a Box<dyn super::TaskRepo>,
+    repo: &'a Box<dyn TaskRepo>,
 }
 
 impl<'a> GetTasks<'a> {
-    pub fn new(repo: &'a Box<dyn super::TaskRepo>) -> Self {
-        GetTasks { repo }
+    pub fn new(repo: &'a Box<dyn TaskRepo>) -> Self {
+        Self { repo }
     }
 
-    pub fn invoke(&self, user_id: &str) -> Result<Vec<super::Task>, String> {
+    pub fn invoke(&self, user_id: &str) -> Result<Vec<Task>, String> {
         self.repo.get(user_id)
     }
 }
 
 pub struct CreateTask<'a> {
-    repo: &'a mut Box<dyn super::TaskRepo>,
+    repo: &'a mut Box<dyn TaskRepo>,
 }
 
 impl<'a> CreateTask<'a> {
-    pub fn new(repo: &'a mut Box<dyn super::TaskRepo>) -> Self {
-        CreateTask { repo }
+    pub fn new(repo: &'a mut Box<dyn TaskRepo>) -> Self {
+        Self { repo }
     }
 
-    pub fn invoke(&mut self, user_id: &str, name: &str) -> Result<super::Task, String> {
+    pub fn invoke(&mut self, user_id: &str, name: &str) -> Result<Task, String> {
         let id = self.repo.next_id()?;
-        let task = super::Task::new(&id, user_id, name)?;
+        let task = Task::new(&id, user_id, name)?;
 
         self.repo.save(&task)?;
 
@@ -92,15 +91,15 @@ impl<'a> CreateTask<'a> {
 }
 
 pub struct CompleteTask<'a> {
-    repo: &'a mut Box<dyn super::TaskRepo>,
+    repo: &'a mut Box<dyn TaskRepo>,
 }
 
 impl<'a> CompleteTask<'a> {
-    pub fn new(repo: &'a mut Box<dyn super::TaskRepo>) -> Self {
+    pub fn new(repo: &'a mut Box<dyn TaskRepo>) -> Self {
         Self { repo }
     }
 
-    pub fn invoke(&mut self, id: &str, user_id: &str) -> Result<super::Task, String> {
+    pub fn invoke(&mut self, id: &str, user_id: &str) -> Result<Task, String> {
         let mut task = match self.repo.find_of_user(id, user_id)? {
             Some(task) => task,
             None => return Err("no such task".to_string()),
@@ -115,12 +114,12 @@ impl<'a> CompleteTask<'a> {
 }
 
 pub struct DeleteTask<'a> {
-    repo: &'a mut Box<dyn super::TaskRepo>,
+    repo: &'a mut Box<dyn TaskRepo>,
 }
 
 impl<'a> DeleteTask<'a> {
-    pub fn new(repo: &'a mut Box<dyn super::TaskRepo>) -> Self {
-        DeleteTask { repo }
+    pub fn new(repo: &'a mut Box<dyn TaskRepo>) -> Self {
+        Self { repo }
     }
 
     pub fn invoke(&mut self, id: &str) -> Result<(), String> {
@@ -130,8 +129,8 @@ impl<'a> DeleteTask<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::infra::memory;
     use super::super::*;
+    use super::infra::memory;
     use super::*;
     #[test]
     fn create_user() {

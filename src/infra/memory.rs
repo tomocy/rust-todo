@@ -1,6 +1,7 @@
 use super::super::TaskRepo as DomainTaskRepo;
 use super::super::UserRepo as DomainUserRepo;
 use super::super::{Task, User};
+use super::rand;
 use std::collections::HashMap;
 
 pub struct UserRepo {
@@ -9,7 +10,7 @@ pub struct UserRepo {
 
 impl UserRepo {
     pub fn new() -> Self {
-        UserRepo {
+        Self {
             users: HashMap::new(),
         }
     }
@@ -17,7 +18,7 @@ impl UserRepo {
 
 impl DomainUserRepo for UserRepo {
     fn next_id(&self) -> Result<String, String> {
-        Ok(super::rand::generate_string(50))
+        Ok(rand::generate_string(50))
     }
 
     fn find_by_email(&self, email: &str) -> Result<Option<User>, String> {
@@ -47,7 +48,7 @@ pub struct TaskRepo {
 
 impl TaskRepo {
     pub fn new() -> Self {
-        TaskRepo {
+        Self {
             tasks: HashMap::new(),
         }
     }
@@ -55,7 +56,7 @@ impl TaskRepo {
 
 impl DomainTaskRepo for TaskRepo {
     fn next_id(&self) -> Result<String, String> {
-        Ok(super::rand::generate_string(70))
+        Ok(rand::generate_string(70))
     }
 
     fn get(&self, user_id: &str) -> Result<Vec<Task>, String> {

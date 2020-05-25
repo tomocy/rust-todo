@@ -20,7 +20,7 @@ pub struct UserRepo {
 
 impl UserRepo {
     pub fn new(workspace: &str) -> Result<Self, String> {
-        Ok(UserRepo {
+        Ok(Self {
             file: File::new(workspace)?,
         })
     }
@@ -65,7 +65,7 @@ pub struct TaskRepo {
 
 impl TaskRepo {
     pub fn new(workspace: &str) -> Result<Self, String> {
-        Ok(TaskRepo {
+        Ok(Self {
             file: File::new(workspace)?,
         })
     }
@@ -142,7 +142,7 @@ pub struct SessionManager {
 
 impl SessionManager {
     pub fn new(workspace: &str) -> Result<Self, String> {
-        Ok(SessionManager {
+        Ok(Self {
             file: File::new(workspace)?,
         })
     }
@@ -180,7 +180,7 @@ struct File {
 
 impl File {
     fn new(workspace: &str) -> Result<Self, String> {
-        let file = File {
+        let file = Self {
             workspace: workspace.to_string(),
         };
 
@@ -247,7 +247,7 @@ struct Store {
 
 impl Store {
     fn new() -> Self {
-        Store {
+        Self {
             users: HashMap::new(),
             tasks: HashMap::new(),
             session: Session::new(),
@@ -310,7 +310,7 @@ struct Session {
 
 impl Session {
     fn new() -> Self {
-        Session {
+        Self {
             authenticated_user_id: String::new(),
         }
     }

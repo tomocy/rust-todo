@@ -2,24 +2,25 @@ extern crate clap;
 
 use super::super::super::usecase;
 use super::super::super::{TaskRepo, UserRepo};
+use super::super::controller;
 
 pub struct App<'a> {
     user_repo: &'a mut Box<dyn UserRepo>,
     task_repo: &'a mut Box<dyn TaskRepo>,
-    user_renderer: &'a Box<dyn super::UserRenderer>,
-    task_renderer: &'a Box<dyn super::TaskRenderer>,
-    session_manager: &'a mut Box<dyn super::SessionManager>,
+    user_renderer: &'a Box<dyn controller::UserRenderer>,
+    task_renderer: &'a Box<dyn controller::TaskRenderer>,
+    session_manager: &'a mut Box<dyn controller::SessionManager>,
 }
 
 impl<'a> App<'a> {
     pub fn new(
         user_repo: &'a mut Box<dyn UserRepo>,
         task_repo: &'a mut Box<dyn TaskRepo>,
-        user_renderer: &'a Box<dyn super::UserRenderer>,
-        task_renderer: &'a Box<dyn super::TaskRenderer>,
-        session_manager: &'a mut Box<dyn super::SessionManager>,
+        user_renderer: &'a Box<dyn controller::UserRenderer>,
+        task_renderer: &'a Box<dyn controller::TaskRenderer>,
+        session_manager: &'a mut Box<dyn controller::SessionManager>,
     ) -> Self {
-        App {
+        Self {
             user_repo,
             task_repo,
             user_renderer,
