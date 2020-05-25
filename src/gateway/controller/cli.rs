@@ -186,12 +186,20 @@ impl<'a> TaskApp<'a> {
     }
 
     fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
-        let user_id = self.session_manager.pop_authenticated_user_id()?;
+        let user_id = self.pop_authenticated_user_id()?;
         let name = args.value_of("name").unwrap();
         let _task = usecase::CreateTask::new(self.repo)
             .invoke(&user_id, name)
             .map_err(|err| format!("failed to create task: {}", err))?;
 
         Ok(())
+    }
+
+    fn pop_authenticated_user_id(&self) -> Result<String, String> {
+        if let Some(user_id) = self.session_manager.pop_authenticated_user_id()? {
+            Ok(user_id)
+        } else {
+            Err("authentication is required.".to_string())
+        }
     }
 }
