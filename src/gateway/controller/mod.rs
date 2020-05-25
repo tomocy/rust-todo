@@ -5,6 +5,7 @@ pub trait UserRenderer: Renderer {
 }
 
 pub trait TaskRenderer: Renderer {
+    fn render_tasks(&self, tasks: &Vec<Task>);
     fn render_task(&self, task: &Task);
 }
 
