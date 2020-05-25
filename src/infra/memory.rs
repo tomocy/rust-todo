@@ -70,4 +70,9 @@ impl DomainTaskRepo for TaskRepo {
         self.tasks.insert(task.id().clone(), task.clone());
         Ok(())
     }
+
+    fn delete(&mut self, id: &str) -> Result<(), String> {
+        self.tasks.remove(id);
+        Ok(())
+    }
 }
