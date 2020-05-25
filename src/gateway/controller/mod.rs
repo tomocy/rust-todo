@@ -17,6 +17,7 @@ pub trait Renderer {
 pub trait SessionManager {
     fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), String>;
     fn pop_authenticated_user_id(&self) -> Result<Option<String>, String>;
+    fn drop_authenticated_user_id(&mut self) -> Result<(), String>;
 }
 
 pub mod cli;
