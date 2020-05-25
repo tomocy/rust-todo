@@ -102,8 +102,7 @@ mod tests {
             .expect("should have succeeded to authenticate user")
             .expect("should have authenticated user");
 
-        assert_eq!(created.id(), user.id());
-        assert_eq!(created.email(), user.email());
+        assert_eq!(created, user);
     }
 
     #[test]

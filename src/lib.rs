@@ -10,7 +10,7 @@ pub trait UserRepo {
     fn save(&mut self, user: &User) -> Result<(), String>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct User {
     id: String,
     email: String,
@@ -54,7 +54,7 @@ impl User {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Hash(String);
 
 impl Hash {
@@ -83,7 +83,7 @@ pub trait TaskRepo {
     fn save(&mut self, task: &Task) -> Result<(), String>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Task {
     id: String,
     user_id: String,
