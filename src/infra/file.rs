@@ -84,6 +84,19 @@ impl DomainTaskRepo for TaskRepo {
         Ok(tasks)
     }
 
+    fn find_of_user(&self, id: &str, user_id: &str) -> Result<Option<DomainTask>, String> {
+        let store = self.file.load()?;
+        for (_, task) in store.tasks {
+            if task.id != id || task.user_id != user_id {
+                continue;
+            }
+
+            return Ok(Some(DomainTask::from(task)));
+        }
+
+        Ok(None)
+    }
+
     fn save(&mut self, task: &DomainTask) -> Result<(), String> {
         let mut store = self.file.load()?;
         store
