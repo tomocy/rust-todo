@@ -1,4 +1,4 @@
-use super::super::super::User;
+use super::super::super::{Task, User};
 use super::super::controller;
 
 pub struct Text {}
@@ -7,6 +7,14 @@ impl controller::UserRenderer for Text {
     fn render_user(&self, user: &User) {
         println!("ID: {}", user.id());
         println!("Email: {}", user.email());
+    }
+}
+
+impl controller::TaskRenderer for Text {
+    fn render_task(&self, task: &Task) {
+        println!("ID: {}", task.id());
+        println!("User ID: {}", task.user_id());
+        println!("Name: {}", task.name());
     }
 }
 
