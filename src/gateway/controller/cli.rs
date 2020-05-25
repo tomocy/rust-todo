@@ -207,9 +207,7 @@ impl<'a> TaskApp<'a> {
             .invoke(&user_id)
             .map_err(|err| format!("failed to get tasks: {}", err))?;
 
-        for task in &tasks {
-            self.renderer.render_task(task);
-        }
+        self.renderer.render_tasks(&tasks);
 
         Ok(())
     }
