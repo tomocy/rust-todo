@@ -36,6 +36,20 @@ impl<'a> AuthenticateUser<'a> {
     }
 }
 
+pub struct GetTasks<'a> {
+    repo: &'a Box<dyn super::TaskRepo>,
+}
+
+impl<'a> GetTasks<'a> {
+    pub fn new(repo: &'a Box<dyn super::TaskRepo>) -> Self {
+        GetTasks { repo }
+    }
+
+    pub fn invoke(&self, user_id: &str) -> Result<Vec<super::Task>, String> {
+        self.repo.get(user_id)
+    }
+}
+
 pub struct CreateTask<'a> {
     repo: &'a mut Box<dyn super::TaskRepo>,
 }
@@ -90,6 +104,23 @@ mod tests {
 
         assert_eq!(created.id(), user.id());
         assert_eq!(created.email(), user.email());
+    }
+
+    #[test]
+    fn get_tasks() {
+        let mut repo: Box<dyn TaskRepo> = Box::new(memory::TaskRepo::new());
+
+        let user_id = "test user id";
+        let created = CreateTask::new(&mut repo)
+            .invoke(&user_id, "test task name")
+            .unwrap();
+
+        let tasks = GetTasks::new(&repo)
+            .invoke(&user_id)
+            .expect("should have succeeded to get tasks");
+
+        assert_eq!(1, tasks.len());
+        assert_eq!(created, *tasks.get(0).unwrap());
     }
 
     #[test]
