@@ -1,7 +1,11 @@
-use super::super::User;
+use super::super::{Task, User};
 
 pub trait UserRenderer: Renderer {
     fn render_user(&self, user: &User);
+}
+
+pub trait TaskRenderer: Renderer {
+    fn render_task(&self, task: &Task);
 }
 
 pub trait Renderer {
