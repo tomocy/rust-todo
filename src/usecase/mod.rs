@@ -69,6 +69,29 @@ impl<'a> CreateTask<'a> {
     }
 }
 
+pub struct CompleteTask<'a> {
+    repo: &'a mut Box<dyn super::TaskRepo>,
+}
+
+impl<'a> CompleteTask<'a> {
+    pub fn new(repo: &'a mut Box<dyn super::TaskRepo>) -> Self {
+        Self { repo }
+    }
+
+    pub fn invoke(&mut self, id: &str, user_id: &str) -> Result<super::Task, String> {
+        let mut task = match self.repo.find_of_user(id, user_id)? {
+            Some(task) => task,
+            None => return Err("no such task".to_string()),
+        };
+
+        task.complete();
+
+        self.repo.save(&task)?;
+
+        Ok(task)
+    }
+}
+
 pub struct DeleteTask<'a> {
     repo: &'a mut Box<dyn super::TaskRepo>,
 }
@@ -147,6 +170,22 @@ mod tests {
 
         assert_eq!(user_id, task.user_id());
         assert_eq!(name, task.name());
+    }
+
+    #[test]
+    fn complete_task() {
+        let mut repo: Box<dyn TaskRepo> = Box::new(memory::TaskRepo::new());
+
+        let user_id = "test user id";
+        let created = CreateTask::new(&mut repo)
+            .invoke(&user_id, "test task name")
+            .expect("should have succeeded to create task");
+
+        let task = CompleteTask::new(&mut repo)
+            .invoke(created.id(), &user_id)
+            .expect("should have succeeded to complete task");
+
+        assert!(task.is_completed());
     }
 
     #[test]
