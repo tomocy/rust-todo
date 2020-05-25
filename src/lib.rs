@@ -79,6 +79,7 @@ impl From<String> for Hash {
 
 pub trait TaskRepo {
     fn next_id(&self) -> Result<String, String>;
+    fn get(&self, user_id: &str) -> Result<Vec<Task>, String>;
     fn save(&mut self, task: &Task) -> Result<(), String>;
 }
 
