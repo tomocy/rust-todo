@@ -11,6 +11,13 @@ impl controller::UserRenderer for Text {
 }
 
 impl controller::TaskRenderer for Text {
+    fn render_tasks(&self, tasks: &Vec<Task>) {
+        for task in tasks {
+            println!("-----");
+            self.render_task(task);
+        }
+    }
+
     fn render_task(&self, task: &Task) {
         println!("ID: {}", task.id());
         println!("User ID: {}", task.user_id());
