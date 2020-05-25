@@ -3,6 +3,8 @@ extern crate serde_json;
 
 use super::super::gateway::controller;
 use super::super::Hash;
+use super::super::Task as DomainTask;
+use super::super::TaskRepo as DomainTaskRepo;
 use super::super::User as DomainUser;
 use super::super::UserRepo as DomainUserRepo;
 use super::rand;
@@ -45,6 +47,48 @@ impl DomainUserRepo for UserRepo {
         store
             .users
             .insert(user.id().clone(), User::from(user.clone()));
+
+        self.file.store(&store)
+    }
+}
+
+pub struct TaskRepo {
+    file: File,
+}
+
+impl TaskRepo {
+    pub fn new(workspace: &str) -> Result<Self, String> {
+        Ok(TaskRepo {
+            file: File::new(workspace)?,
+        })
+    }
+}
+
+impl DomainTaskRepo for TaskRepo {
+    fn next_id(&self) -> Result<String, String> {
+        Ok(rand::generate_string(70))
+    }
+
+    fn get(&self, user_id: &str) -> Result<Vec<DomainTask>, String> {
+        let store = self.file.load()?;
+
+        let mut tasks = Vec::new();
+        for (_, task) in store.tasks {
+            if task.user_id != user_id {
+                continue;
+            }
+
+            tasks.push(DomainTask::from(task));
+        }
+
+        Ok(tasks)
+    }
+
+    fn save(&mut self, task: &DomainTask) -> Result<(), String> {
+        let mut store = self.file.load()?;
+        store
+            .tasks
+            .insert(task.id().clone(), Task::from(task.clone()));
 
         self.file.store(&store)
     }
@@ -148,6 +192,7 @@ impl File {
 #[derive(Serialize, Deserialize)]
 struct Store {
     users: HashMap<String, User>,
+    tasks: HashMap<String, Task>,
     session: Session,
 }
 
@@ -155,6 +200,7 @@ impl Store {
     fn new() -> Self {
         Store {
             users: HashMap::new(),
+            tasks: HashMap::new(),
             session: Session::new(),
         }
     }
@@ -179,6 +225,29 @@ impl From<DomainUser> for User {
             id: user.id().clone(),
             email: user.email().clone(),
             password: user.password().clone().0,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct Task {
+    id: String,
+    user_id: String,
+    name: String,
+}
+
+impl From<Task> for DomainTask {
+    fn from(task: Task) -> Self {
+        DomainTask::new(&task.id, &task.user_id, &task.name).unwrap()
+    }
+}
+
+impl From<DomainTask> for Task {
+    fn from(task: DomainTask) -> Self {
+        Task {
+            id: task.id().clone(),
+            user_id: task.user_id().clone(),
+            name: task.name().clone(),
         }
     }
 }
