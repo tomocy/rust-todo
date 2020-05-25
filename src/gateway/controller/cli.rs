@@ -77,6 +77,7 @@ impl<'a> App<'a> {
                         .long("password")
                         .takes_value(true),
                 ),
+            clap::SubCommand::with_name("deauthenticate"),
         ])
     }
 
@@ -128,6 +129,7 @@ impl<'a> UserApp<'a> {
         match args.subcommand() {
             ("create", Some(args)) => self.create(args),
             ("authenticate", Some(args)) => self.authenticate(args),
+            ("deauthenticate", Some(_)) => self.deauthenticate(),
             _ => Err("unknown command".to_string()),
         }
     }
@@ -177,6 +179,15 @@ impl<'a> UserApp<'a> {
                 Ok(())
             }
         }
+    }
+
+    fn deauthenticate(&mut self) -> Result<(), String> {
+        self.session_manager.drop_authenticated_user_id()?;
+        self.renderer
+            .render_message("You are successfully logged out.");
+        self.renderer.render_message("See you later!");
+
+        Ok(())
     }
 }
 
