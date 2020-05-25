@@ -34,6 +34,11 @@ impl DomainUserRepo for UserRepo {
         self.users.insert(user.id().clone(), user.clone());
         Ok(())
     }
+
+    fn delete(&mut self, id: &str) -> Result<(), String> {
+        self.users.remove(id);
+        Ok(())
+    }
 }
 
 pub struct TaskRepo {
