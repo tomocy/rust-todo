@@ -92,6 +92,13 @@ impl DomainTaskRepo for TaskRepo {
 
         self.file.store(&store)
     }
+
+    fn delete(&mut self, id: &str) -> Result<(), String> {
+        let mut store = self.file.load()?;
+        store.tasks.remove(id);
+
+        self.file.store(&store)
+    }
 }
 
 pub struct SessionManager {
