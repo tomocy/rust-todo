@@ -9,4 +9,9 @@ pub trait Renderer {
     fn render_error(&self, msg: &str);
 }
 
+pub trait SessionManager {
+    fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), String>;
+    fn pop_authenticated_user_id(&self) -> Result<String, String>;
+}
+
 pub mod cli;
