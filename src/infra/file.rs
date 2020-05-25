@@ -70,9 +70,14 @@ impl controller::SessionManager for SessionManager {
         self.file.store(&store)
     }
 
-    fn pop_authenticated_user_id(&self) -> Result<String, String> {
+    fn pop_authenticated_user_id(&self) -> Result<Option<String>, String> {
         let store = self.file.load()?;
-        Ok(store.session.authenticated_user_id)
+        let user_id = store.session.authenticated_user_id;
+        if user_id.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(user_id))
+        }
     }
 }
 
