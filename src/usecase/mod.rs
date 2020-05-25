@@ -36,6 +36,28 @@ impl<'a> AuthenticateUser<'a> {
     }
 }
 
+pub struct DeleteUser<'a> {
+    user_repo: &'a mut Box<dyn super::UserRepo>,
+    task_repo: &'a mut Box<dyn super::TaskRepo>,
+}
+
+impl<'a> DeleteUser<'a> {
+    pub fn new(
+        user_repo: &'a mut Box<dyn super::UserRepo>,
+        task_repo: &'a mut Box<dyn super::TaskRepo>,
+    ) -> Self {
+        Self {
+            user_repo,
+            task_repo,
+        }
+    }
+
+    pub fn invoke(&mut self, id: &str) -> Result<(), String> {
+        self.task_repo.delete_of_user(id)?;
+        self.user_repo.delete(id)
+    }
+}
+
 pub struct GetTasks<'a> {
     repo: &'a Box<dyn super::TaskRepo>,
 }
@@ -140,6 +162,34 @@ mod tests {
             .expect("should have authenticated user");
 
         assert_eq!(created, user);
+    }
+
+    #[test]
+    fn delete_user() {
+        let mut user_repo: Box<dyn UserRepo> = Box::new(memory::UserRepo::new());
+        let mut task_repo: Box<dyn TaskRepo> = Box::new(memory::TaskRepo::new());
+
+        let (email, password) = ("test@example.com", "aiueo");
+        let user = CreateUser::new(&mut user_repo)
+            .invoke(email, password)
+            .unwrap();
+
+        CreateTask::new(&mut task_repo)
+            .invoke(user.id(), "test task name 1")
+            .unwrap();
+        CreateTask::new(&mut task_repo)
+            .invoke(user.id(), "test task name 2")
+            .unwrap();
+
+        DeleteUser::new(&mut user_repo, &mut task_repo)
+            .invoke(user.id())
+            .expect("should have succeeded to delete user");
+
+        assert_eq!(None, user_repo.find_by_email(user.email()).unwrap());
+        assert_eq!(
+            0,
+            GetTasks::new(&task_repo).invoke(user.id()).unwrap().len()
+        );
     }
 
     #[test]
