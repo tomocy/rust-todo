@@ -80,6 +80,7 @@ impl From<String> for Hash {
 pub trait TaskRepo {
     fn next_id(&self) -> Result<String, String>;
     fn get(&self, user_id: &str) -> Result<Vec<Task>, String>;
+    fn find_of_user(&self, id: &str, user_id: &str) -> Result<Option<Task>, String>;
     fn save(&mut self, task: &Task) -> Result<(), String>;
     fn delete(&mut self, id: &str) -> Result<(), String>;
 }
