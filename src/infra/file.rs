@@ -1,12 +1,12 @@
 extern crate serde;
 extern crate serde_json;
 
+use super::super::gateway::controller;
 use super::super::Hash;
 use super::super::User as DomainUser;
 use super::super::UserRepo as DomainUserRepo;
 use super::rand;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::io::prelude::*;
@@ -47,6 +47,32 @@ impl DomainUserRepo for UserRepo {
             .insert(user.id().clone(), User::from(user.clone()));
 
         self.file.store(&store)
+    }
+}
+
+pub struct SessionManager {
+    file: File,
+}
+
+impl SessionManager {
+    pub fn new(workspace: &str) -> Result<Self, String> {
+        Ok(SessionManager {
+            file: File::new(workspace)?,
+        })
+    }
+}
+
+impl controller::SessionManager for SessionManager {
+    fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), String> {
+        let mut store = self.file.load()?;
+        store.session.authenticated_user_id = user_id.to_string();
+
+        self.file.store(&store)
+    }
+
+    fn pop_authenticated_user_id(&self) -> Result<String, String> {
+        let store = self.file.load()?;
+        Ok(store.session.authenticated_user_id)
     }
 }
 
