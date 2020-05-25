@@ -193,7 +193,13 @@ impl<'a> TaskApp<'a> {
     }
 
     fn create(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
-        let user_id = self.pop_authenticated_user_id()?;
+        let user_id = match self.session_manager.pop_authenticated_user_id()? {
+            Some(user_id) => user_id,
+            None => {
+                self.renderer.render_error("authentication is required.");
+                return Ok(());
+            }
+        };
         let name = args.value_of("name").unwrap();
         let task = usecase::CreateTask::new(self.repo)
             .invoke(&user_id, name)
@@ -204,13 +210,5 @@ impl<'a> TaskApp<'a> {
         self.renderer.render_task(&task);
 
         Ok(())
-    }
-
-    fn pop_authenticated_user_id(&self) -> Result<String, String> {
-        if let Some(user_id) = self.session_manager.pop_authenticated_user_id()? {
-            Ok(user_id)
-        } else {
-            Err("authentication is required.".to_string())
-        }
     }
 }
