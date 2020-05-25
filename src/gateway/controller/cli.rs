@@ -7,6 +7,7 @@ pub struct App<'a> {
     user_repo: &'a mut Box<dyn UserRepo>,
     task_repo: &'a mut Box<dyn TaskRepo>,
     user_renderer: &'a Box<dyn super::UserRenderer>,
+    task_renderer: &'a Box<dyn super::TaskRenderer>,
     session_manager: &'a mut Box<dyn super::SessionManager>,
 }
 
@@ -15,12 +16,14 @@ impl<'a> App<'a> {
         user_repo: &'a mut Box<dyn UserRepo>,
         task_repo: &'a mut Box<dyn TaskRepo>,
         user_renderer: &'a Box<dyn super::UserRenderer>,
+        task_renderer: &'a Box<dyn super::TaskRenderer>,
         session_manager: &'a mut Box<dyn super::SessionManager>,
     ) -> Self {
         App {
             user_repo,
             task_repo,
             user_renderer,
+            task_renderer,
             session_manager,
         }
     }
@@ -34,7 +37,8 @@ impl<'a> App<'a> {
                 app.run(args)
             }
             ("task", Some(args)) => {
-                let mut app = TaskApp::new(self.task_repo, self.session_manager);
+                let mut app =
+                    TaskApp::new(self.task_repo, self.task_renderer, self.session_manager);
                 app.run(args)
             }
             _ => Err("unknown command".to_string()),
@@ -164,16 +168,19 @@ impl<'a> UserApp<'a> {
 
 struct TaskApp<'a> {
     repo: &'a mut Box<dyn TaskRepo>,
+    renderer: &'a Box<dyn super::TaskRenderer>,
     session_manager: &'a Box<dyn super::SessionManager>,
 }
 
 impl<'a> TaskApp<'a> {
     fn new(
         repo: &'a mut Box<dyn TaskRepo>,
+        renderer: &'a Box<dyn super::TaskRenderer>,
         session_manager: &'a mut Box<dyn super::SessionManager>,
     ) -> Self {
         TaskApp {
             repo,
+            renderer,
             session_manager,
         }
     }
