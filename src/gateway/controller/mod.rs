@@ -1,6 +1,7 @@
 pub mod cli;
 
 use super::super::{Task, User};
+use std::error;
 
 pub trait UserRenderer: Renderer {
     fn render_user(&self, user: &User);
@@ -17,7 +18,7 @@ pub trait Renderer {
 }
 
 pub trait SessionManager {
-    fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), String>;
-    fn pop_authenticated_user_id(&self) -> Result<Option<String>, String>;
-    fn drop_authenticated_user_id(&mut self) -> Result<(), String>;
+    fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), Box<dyn error::Error>>;
+    fn pop_authenticated_user_id(&self) -> Result<Option<String>, Box<dyn error::Error>>;
+    fn drop_authenticated_user_id(&mut self) -> Result<(), Box<dyn error::Error>>;
 }

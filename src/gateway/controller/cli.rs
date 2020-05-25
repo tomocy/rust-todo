@@ -3,6 +3,7 @@ extern crate clap;
 use super::super::super::usecase;
 use super::super::super::{TaskRepo, UserRepo};
 use super::super::controller;
+use std::error;
 
 pub struct App<'a> {
     user_repo: &'a mut Box<dyn UserRepo>,
@@ -29,12 +30,12 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn run(&mut self) -> Result<(), String> {
+    pub fn run(&mut self) -> Result<(), Box<dyn error::Error>> {
         let args = self.app().get_matches();
         match args.subcommand() {
             ("user", Some(args)) => self.run_user_command(args),
             ("task", Some(args)) => self.run_task_command(args),
-            _ => Err("unknown command".to_string()),
+            _ => Err(From::from("unknown command")),
         }
     }
 
@@ -101,17 +102,17 @@ impl<'a> App<'a> {
 }
 
 impl<'a> App<'a> {
-    fn run_user_command(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn run_user_command(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         match args.subcommand() {
             ("create", Some(args)) => self.create_user(args),
             ("login", Some(args)) => self.authenticate_user(args),
             ("logout", Some(_)) => self.deauthenticate_user(),
             ("delete", Some(_)) => self.delete_user(),
-            _ => Err("unknown command".to_string()),
+            _ => Err(From::from("unknown command")),
         }
     }
 
-    fn create_user(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn create_user(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         let (email, password) = (
             args.value_of("email").unwrap(),
             args.value_of("password").unwrap(),
@@ -130,7 +131,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    fn authenticate_user(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn authenticate_user(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         let (email, password) = (
             args.value_of("email").unwrap(),
             args.value_of("password").unwrap(),
@@ -159,7 +160,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn deauthenticate_user(&mut self) -> Result<(), String> {
+    fn deauthenticate_user(&mut self) -> Result<(), Box<dyn error::Error>> {
         self.session_manager.drop_authenticated_user_id()?;
         self.user_renderer
             .render_message("You are successfully logged out.");
@@ -168,7 +169,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    fn delete_user(&mut self) -> Result<(), String> {
+    fn delete_user(&mut self) -> Result<(), Box<dyn error::Error>> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
@@ -190,17 +191,17 @@ impl<'a> App<'a> {
 }
 
 impl<'a> App<'a> {
-    fn run_task_command(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn run_task_command(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         match args.subcommand() {
             ("get", Some(_)) => self.get_tasks(),
             ("create", Some(args)) => self.create_task(args),
             ("complete", Some(args)) => self.complete_task(args),
             ("delete", Some(args)) => self.delete_task(args),
-            _ => Err("unknown command".to_string()),
+            _ => Err(From::from("unknown command")),
         }
     }
 
-    fn get_tasks(&self) -> Result<(), String> {
+    fn get_tasks(&self) -> Result<(), Box<dyn error::Error>> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
@@ -218,7 +219,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    fn create_task(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn create_task(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
@@ -239,7 +240,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    fn complete_task(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn complete_task(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         let user_id = match self.session_manager.pop_authenticated_user_id()? {
             Some(user_id) => user_id,
             None => {
@@ -257,7 +258,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    fn delete_task(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn delete_task(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
         if let None = self.session_manager.pop_authenticated_user_id()? {
             self.task_renderer
                 .render_error("authentication is required.");

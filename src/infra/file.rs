@@ -10,6 +10,7 @@ use super::super::UserRepo as DomainUserRepo;
 use super::rand;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::error;
 use std::fs;
 use std::io::prelude::*;
 use std::path::Path;
@@ -19,7 +20,7 @@ pub struct UserRepo {
 }
 
 impl UserRepo {
-    pub fn new(workspace: &str) -> Result<Self, String> {
+    pub fn new(workspace: &str) -> Result<Self, Box<dyn error::Error>> {
         Ok(Self {
             file: File::new(workspace)?,
         })
@@ -27,11 +28,11 @@ impl UserRepo {
 }
 
 impl DomainUserRepo for UserRepo {
-    fn next_id(&self) -> Result<String, String> {
+    fn next_id(&self) -> Result<String, Box<dyn error::Error>> {
         Ok(rand::generate_string(50))
     }
 
-    fn find_by_email(&self, email: &str) -> Result<Option<DomainUser>, String> {
+    fn find_by_email(&self, email: &str) -> Result<Option<DomainUser>, Box<dyn error::Error>> {
         let store = self.file.load()?;
         for (_, user) in &store.users {
             if user.email == email {
@@ -42,7 +43,7 @@ impl DomainUserRepo for UserRepo {
         Ok(None)
     }
 
-    fn save(&mut self, user: &DomainUser) -> Result<(), String> {
+    fn save(&mut self, user: &DomainUser) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         store
             .users
@@ -51,7 +52,7 @@ impl DomainUserRepo for UserRepo {
         self.file.store(&store)
     }
 
-    fn delete(&mut self, id: &str) -> Result<(), String> {
+    fn delete(&mut self, id: &str) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         store.users.remove(id);
 
@@ -64,7 +65,7 @@ pub struct TaskRepo {
 }
 
 impl TaskRepo {
-    pub fn new(workspace: &str) -> Result<Self, String> {
+    pub fn new(workspace: &str) -> Result<Self, Box<dyn error::Error>> {
         Ok(Self {
             file: File::new(workspace)?,
         })
@@ -72,11 +73,11 @@ impl TaskRepo {
 }
 
 impl DomainTaskRepo for TaskRepo {
-    fn next_id(&self) -> Result<String, String> {
+    fn next_id(&self) -> Result<String, Box<dyn error::Error>> {
         Ok(rand::generate_string(70))
     }
 
-    fn get(&self, user_id: &str) -> Result<Vec<DomainTask>, String> {
+    fn get(&self, user_id: &str) -> Result<Vec<DomainTask>, Box<dyn error::Error>> {
         let store = self.file.load()?;
 
         let mut tasks = Vec::new();
@@ -91,7 +92,11 @@ impl DomainTaskRepo for TaskRepo {
         Ok(tasks)
     }
 
-    fn find_of_user(&self, id: &str, user_id: &str) -> Result<Option<DomainTask>, String> {
+    fn find_of_user(
+        &self,
+        id: &str,
+        user_id: &str,
+    ) -> Result<Option<DomainTask>, Box<dyn error::Error>> {
         let store = self.file.load()?;
         for (_, task) in store.tasks {
             if task.id != id || task.user_id != user_id {
@@ -104,7 +109,7 @@ impl DomainTaskRepo for TaskRepo {
         Ok(None)
     }
 
-    fn save(&mut self, task: &DomainTask) -> Result<(), String> {
+    fn save(&mut self, task: &DomainTask) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         store
             .tasks
@@ -113,14 +118,14 @@ impl DomainTaskRepo for TaskRepo {
         self.file.store(&store)
     }
 
-    fn delete(&mut self, id: &str) -> Result<(), String> {
+    fn delete(&mut self, id: &str) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         store.tasks.remove(id);
 
         self.file.store(&store)
     }
 
-    fn delete_of_user(&mut self, user_id: &str) -> Result<(), String> {
+    fn delete_of_user(&mut self, user_id: &str) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         let ids: Vec<String> = store
             .tasks
@@ -141,7 +146,7 @@ pub struct SessionManager {
 }
 
 impl SessionManager {
-    pub fn new(workspace: &str) -> Result<Self, String> {
+    pub fn new(workspace: &str) -> Result<Self, Box<dyn error::Error>> {
         Ok(Self {
             file: File::new(workspace)?,
         })
@@ -149,14 +154,14 @@ impl SessionManager {
 }
 
 impl controller::SessionManager for SessionManager {
-    fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), String> {
+    fn push_authenticated_user_id(&mut self, user_id: &str) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         store.session.authenticated_user_id = user_id.to_string();
 
         self.file.store(&store)
     }
 
-    fn pop_authenticated_user_id(&self) -> Result<Option<String>, String> {
+    fn pop_authenticated_user_id(&self) -> Result<Option<String>, Box<dyn error::Error>> {
         let store = self.file.load()?;
         let user_id = store.session.authenticated_user_id;
         if user_id.is_empty() {
@@ -166,7 +171,7 @@ impl controller::SessionManager for SessionManager {
         }
     }
 
-    fn drop_authenticated_user_id(&mut self) -> Result<(), String> {
+    fn drop_authenticated_user_id(&mut self) -> Result<(), Box<dyn error::Error>> {
         let mut store = self.file.load()?;
         store.session.authenticated_user_id = "".to_string();
 
@@ -179,7 +184,7 @@ struct File {
 }
 
 impl File {
-    fn new(workspace: &str) -> Result<Self, String> {
+    fn new(workspace: &str) -> Result<Self, Box<dyn error::Error>> {
         let file = Self {
             workspace: workspace.to_string(),
         };
@@ -189,22 +194,20 @@ impl File {
         Ok(file)
     }
 
-    fn init_store_file_if_not_exist(&self) -> Result<(), String> {
+    fn init_store_file_if_not_exist(&self) -> Result<(), Box<dyn error::Error>> {
         let path = self.store_path()?;
 
         if Path::new(&path).exists() {
             return Ok(());
         }
 
-        let store = serde_json::to_string(&Store::new()).map_err(|err| err.to_string())?;
+        let store = serde_json::to_string(&Store::new())?;
+        fs::File::create(path)?.write_all(store.as_bytes())?;
 
-        fs::File::create(path)
-            .map_err(|err| err.to_string())?
-            .write_all(store.as_bytes())
-            .map_err(|err| err.to_string())
+        Ok(())
     }
 
-    fn load(&self) -> Result<Store, String> {
+    fn load(&self) -> Result<Store, Box<dyn error::Error>> {
         let path = self.store_path()?;
         let mut store = String::new();
 
@@ -217,18 +220,17 @@ impl File {
         Ok(serde_json::from_str(&store).map_err(|err| err.to_string())?)
     }
 
-    fn store(&self, store: &Store) -> Result<(), String> {
+    fn store(&self, store: &Store) -> Result<(), Box<dyn error::Error>> {
         let path = self.store_path()?;
         let store = serde_json::to_string(store).map_err(|err| err.to_string())?;
 
         self.init_store_file_if_not_exist()?;
-        fs::File::create(path)
-            .map_err(|err| err.to_string())?
-            .write_all(store.as_bytes())
-            .map_err(|err| err.to_string())
+        fs::File::create(path)?.write_all(store.as_bytes())?;
+
+        Ok(())
     }
 
-    fn store_path(&self) -> Result<String, String> {
+    fn store_path(&self) -> Result<String, Box<dyn error::Error>> {
         Ok(Path::new(&self.workspace)
             .join("store.json")
             .to_str()
