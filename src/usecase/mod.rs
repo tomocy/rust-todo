@@ -69,6 +69,20 @@ impl<'a> CreateTask<'a> {
     }
 }
 
+pub struct DeleteTask<'a> {
+    repo: &'a mut Box<dyn super::TaskRepo>,
+}
+
+impl<'a> DeleteTask<'a> {
+    pub fn new(repo: &'a mut Box<dyn super::TaskRepo>) -> Self {
+        DeleteTask { repo }
+    }
+
+    pub fn invoke(&mut self, id: &str) -> Result<(), String> {
+        self.repo.delete(id)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::infra::memory;
@@ -133,5 +147,21 @@ mod tests {
 
         assert_eq!(user_id, task.user_id());
         assert_eq!(name, task.name());
+    }
+
+    #[test]
+    fn delete_task() {
+        let mut repo: Box<dyn TaskRepo> = Box::new(memory::TaskRepo::new());
+        let user_id = "test user id";
+        let created = CreateTask::new(&mut repo)
+            .invoke(&user_id, "test task name")
+            .unwrap();
+
+        DeleteTask::new(&mut repo)
+            .invoke(&created.id())
+            .expect("should have succeeded to delete task");
+
+        let got = GetTasks::new(&repo).invoke(&user_id).unwrap();
+        assert_eq!(0, got.len());
     }
 }
