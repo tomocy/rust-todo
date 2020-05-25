@@ -89,6 +89,12 @@ impl<'a> App<'a> {
                     .takes_value(true),
             ),
             clap::SubCommand::with_name("get"),
+            clap::SubCommand::with_name("delete").arg(
+                clap::Arg::with_name("id")
+                    .required(true)
+                    .long("id")
+                    .takes_value(true),
+            ),
         ])
     }
 }
@@ -191,6 +197,7 @@ impl<'a> TaskApp<'a> {
         match args.subcommand() {
             ("create", Some(args)) => self.create(args),
             ("get", Some(_)) => self.get(),
+            ("delete", Some(args)) => self.delete(args),
             _ => Err("unknown command".to_string()),
         }
     }
@@ -228,6 +235,21 @@ impl<'a> TaskApp<'a> {
         self.renderer
             .render_message("Task is successfully created.");
         self.renderer.render_task(&task);
+
+        Ok(())
+    }
+
+    fn delete(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        if let None = self.session_manager.pop_authenticated_user_id()? {
+            self.renderer.render_error("authentication is required.");
+            return Ok(());
+        }
+
+        let id = args.value_of("id").unwrap();
+        usecase::DeleteTask::new(&mut self.repo).invoke(id)?;
+
+        self.renderer
+            .render_message("The task is successfully deleted.");
 
         Ok(())
     }
