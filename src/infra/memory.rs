@@ -1,8 +1,10 @@
-use super::super::User;
+use super::super::TaskRepo as DomainTaskRepo;
+use super::super::UserRepo as DomainUserRepo;
+use super::super::{Task, User};
 use std::collections::HashMap;
 
 pub struct UserRepo {
-    users: HashMap<String, super::super::User>,
+    users: HashMap<String, User>,
 }
 
 impl UserRepo {
@@ -13,7 +15,7 @@ impl UserRepo {
     }
 }
 
-impl super::super::UserRepo for UserRepo {
+impl DomainUserRepo for UserRepo {
     fn next_id(&self) -> Result<String, String> {
         Ok(super::rand::generate_string(50))
     }
@@ -30,6 +32,29 @@ impl super::super::UserRepo for UserRepo {
 
     fn save(&mut self, user: &User) -> Result<(), String> {
         self.users.insert(user.id().clone(), user.clone());
+        Ok(())
+    }
+}
+
+pub struct TaskRepo {
+    tasks: HashMap<String, Task>,
+}
+
+impl TaskRepo {
+    pub fn new() -> Self {
+        TaskRepo {
+            tasks: HashMap::new(),
+        }
+    }
+}
+
+impl DomainTaskRepo for TaskRepo {
+    fn next_id(&self) -> Result<String, String> {
+        Ok(super::rand::generate_string(70))
+    }
+
+    fn save(&mut self, task: &Task) -> Result<(), String> {
+        self.tasks.insert(task.id().clone(), task.clone());
         Ok(())
     }
 }
