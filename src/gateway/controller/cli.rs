@@ -6,16 +6,19 @@ use super::super::super::UserRepo;
 pub struct App<'a> {
     user_repo: &'a mut Box<dyn UserRepo>,
     user_renderer: &'a Box<dyn super::UserRenderer>,
+    session_manager: &'a mut Box<dyn super::SessionManager>,
 }
 
 impl<'a> App<'a> {
     pub fn new(
         user_repo: &'a mut Box<dyn UserRepo>,
         user_renderer: &'a Box<dyn super::UserRenderer>,
+        session_manager: &'a mut Box<dyn super::SessionManager>,
     ) -> Self {
         App {
             user_repo,
             user_renderer,
+            session_manager,
         }
     }
 
@@ -23,7 +26,8 @@ impl<'a> App<'a> {
         let args = self.app().get_matches();
         match args.subcommand() {
             ("user", Some(args)) => {
-                let mut app = UserApp::new(self.user_repo, self.user_renderer);
+                let mut app =
+                    UserApp::new(self.user_repo, self.user_renderer, self.session_manager);
                 app.run(args)
             }
             _ => Err("unknown command".to_string()),
@@ -69,11 +73,20 @@ impl<'a> App<'a> {
 struct UserApp<'a> {
     repo: &'a mut Box<dyn UserRepo>,
     renderer: &'a Box<dyn super::UserRenderer>,
+    session_manager: &'a mut Box<dyn super::SessionManager>,
 }
 
 impl<'a> UserApp<'a> {
-    fn new(repo: &'a mut Box<dyn UserRepo>, renderer: &'a Box<dyn super::UserRenderer>) -> Self {
-        UserApp { repo, renderer }
+    fn new(
+        repo: &'a mut Box<dyn UserRepo>,
+        renderer: &'a Box<dyn super::UserRenderer>,
+        session_manager: &'a mut Box<dyn super::SessionManager>,
+    ) -> Self {
+        UserApp {
+            repo,
+            renderer,
+            session_manager,
+        }
     }
 
     fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
@@ -93,6 +106,9 @@ impl<'a> UserApp<'a> {
             .invoke(email, password)
             .map_err(|err| format!("failed to create user: {}", err))?;
 
+        self.session_manager
+            .push_authenticated_user_id(&user.id())?;
+
         self.renderer
             .render_message("User is successfully created.");
         self.renderer.render_user(&user);
@@ -100,7 +116,7 @@ impl<'a> UserApp<'a> {
         Ok(())
     }
 
-    fn authenticate(&self, args: &clap::ArgMatches) -> Result<(), String> {
+    fn authenticate(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
         let (email, password) = (
             args.value_of("email").unwrap(),
             args.value_of("password").unwrap(),
@@ -111,6 +127,9 @@ impl<'a> UserApp<'a> {
 
         match user {
             Some(user) => {
+                self.session_manager
+                    .push_authenticated_user_id(&user.id())?;
+
                 self.renderer
                     .render_message("User is successfully created.");
                 self.renderer.render_user(&user);
