@@ -1,7 +1,7 @@
 extern crate clap;
 
 use super::super::super::usecase;
-use super::super::super::UserRepo;
+use super::super::super::{TaskRepo, UserRepo};
 
 pub struct App<'a> {
     user_repo: &'a mut Box<dyn UserRepo>,
@@ -141,6 +141,29 @@ impl<'a> UserApp<'a> {
 
                 Ok(())
             }
+        }
+    }
+}
+
+struct TaskApp<'a> {
+    repo: &'a mut Box<dyn TaskRepo>,
+    session_manager: &'a Box<dyn super::SessionManager>,
+}
+
+impl<'a> TaskApp<'a> {
+    fn new(
+        repo: &'a mut Box<dyn TaskRepo>,
+        session_manager: &'a mut Box<dyn super::SessionManager>,
+    ) -> Self {
+        TaskApp {
+            repo,
+            session_manager,
+        }
+    }
+
+    fn run(&mut self, args: &clap::ArgMatches) -> Result<(), String> {
+        match args.subcommand {
+            _ => Err("unknown command".to_string()),
         }
     }
 }
