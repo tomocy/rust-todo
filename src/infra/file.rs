@@ -143,6 +143,13 @@ impl controller::SessionManager for SessionManager {
             Ok(Some(user_id))
         }
     }
+
+    fn drop_authenticated_user_id(&mut self) -> Result<(), String> {
+        let mut store = self.file.load()?;
+        store.session.authenticated_user_id = "".to_string();
+
+        self.file.store(&store)
+    }
 }
 
 struct File {
