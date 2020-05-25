@@ -32,8 +32,12 @@ impl<'a> App<'a> {
         let args = self.app().get_matches();
         match args.subcommand() {
             ("user", Some(args)) => {
-                let mut app =
-                    UserApp::new(self.user_repo, self.user_renderer, self.session_manager);
+                let mut app = UserApp::new(
+                    self.user_repo,
+                    self.task_repo,
+                    self.user_renderer,
+                    self.session_manager,
+                );
                 app.run(args)
             }
             ("task", Some(args)) => {
@@ -78,6 +82,7 @@ impl<'a> App<'a> {
                         .takes_value(true),
                 ),
             clap::SubCommand::with_name("logout"),
+            clap::SubCommand::with_name("delete"),
         ])
     }
 
@@ -108,6 +113,7 @@ impl<'a> App<'a> {
 
 struct UserApp<'a> {
     repo: &'a mut Box<dyn UserRepo>,
+    task_repo: &'a mut Box<dyn TaskRepo>,
     renderer: &'a Box<dyn super::UserRenderer>,
     session_manager: &'a mut Box<dyn super::SessionManager>,
 }
@@ -115,11 +121,13 @@ struct UserApp<'a> {
 impl<'a> UserApp<'a> {
     fn new(
         repo: &'a mut Box<dyn UserRepo>,
+        task_repo: &'a mut Box<dyn TaskRepo>,
         renderer: &'a Box<dyn super::UserRenderer>,
         session_manager: &'a mut Box<dyn super::SessionManager>,
     ) -> Self {
         UserApp {
             repo,
+            task_repo,
             renderer,
             session_manager,
         }
@@ -130,6 +138,7 @@ impl<'a> UserApp<'a> {
             ("create", Some(args)) => self.create(args),
             ("login", Some(args)) => self.authenticate(args),
             ("logout", Some(_)) => self.deauthenticate(),
+            ("delete", Some(_)) => self.delete(),
             _ => Err("unknown command".to_string()),
         }
     }
@@ -187,6 +196,25 @@ impl<'a> UserApp<'a> {
         self.renderer
             .render_message("You are successfully logged out.");
         self.renderer.render_message("See you later!");
+
+        Ok(())
+    }
+
+    fn delete(&mut self) -> Result<(), String> {
+        let user_id = match self.session_manager.pop_authenticated_user_id()? {
+            Some(user_id) => user_id,
+            None => {
+                self.renderer.render_error("authentication is required.");
+                return Ok(());
+            }
+        };
+
+        self.session_manager.drop_authenticated_user_id()?;
+        usecase::DeleteUser::new(&mut self.repo, &mut self.task_repo).invoke(&user_id)?;
+
+        self.renderer
+            .render_message("Your data are completed deleted.");
+        self.renderer.render_message("Take care of yourself.");
 
         Ok(())
     }
