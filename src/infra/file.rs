@@ -119,6 +119,21 @@ impl DomainTaskRepo for TaskRepo {
 
         self.file.store(&store)
     }
+
+    fn delete_of_user(&mut self, user_id: &str) -> Result<(), String> {
+        let mut store = self.file.load()?;
+        let ids: Vec<String> = store
+            .tasks
+            .values()
+            .filter(|task| task.user_id == user_id)
+            .map(|task| task.id.clone())
+            .collect();
+        for id in ids {
+            store.tasks.remove(&id);
+        }
+
+        self.file.store(&store)
+    }
 }
 
 pub struct SessionManager {
