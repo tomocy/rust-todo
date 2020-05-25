@@ -66,6 +66,18 @@ impl DomainTaskRepo for TaskRepo {
         Ok(tasks)
     }
 
+    fn find_of_user(&self, id: &str, user_id: &str) -> Result<Option<Task>, String> {
+        for (_, task) in &self.tasks {
+            if task.id() != id || task.user_id() != user_id {
+                continue;
+            }
+
+            return Ok(Some(task.clone()));
+        }
+
+        Ok(None)
+    }
+
     fn save(&mut self, task: &Task) -> Result<(), String> {
         self.tasks.insert(task.id().clone(), task.clone());
         Ok(())
