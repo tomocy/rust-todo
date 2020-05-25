@@ -36,6 +36,25 @@ impl<'a> AuthenticateUser<'a> {
     }
 }
 
+pub struct CreateTask<'a> {
+    repo: &'a mut Box<dyn super::TaskRepo>,
+}
+
+impl<'a> CreateTask<'a> {
+    pub fn new(repo: &'a mut Box<dyn super::TaskRepo>) -> Self {
+        CreateTask { repo }
+    }
+
+    pub fn invoke(&mut self, user_id: &str, name: &str) -> Result<super::Task, String> {
+        let id = self.repo.next_id()?;
+        let task = super::Task::new(&id, user_id, name)?;
+
+        self.repo.save(&task)?;
+
+        Ok(task)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::infra::memory;
@@ -71,5 +90,18 @@ mod tests {
 
         assert_eq!(created.id(), user.id());
         assert_eq!(created.email(), user.email());
+    }
+
+    #[test]
+    fn create_task() {
+        let mut repo: Box<dyn TaskRepo> = Box::new(memory::TaskRepo::new());
+
+        let (user_id, name) = ("test user id", "test task name");
+        let task = CreateTask::new(&mut repo)
+            .invoke(user_id, name)
+            .expect("should have succeeded to create task");
+
+        assert_eq!(user_id, task.user_id());
+        assert_eq!(name, task.name());
     }
 }
