@@ -259,14 +259,16 @@ impl<'a> App<'a> {
     }
 
     fn delete_task(&mut self, args: &clap::ArgMatches) -> Result<(), Box<dyn error::Error>> {
-        if let None = self.session_manager.pop_authenticated_user_id()? {
-            self.task_renderer
-                .render_error("authentication is required.");
-            return Ok(());
-        }
-
+        let user_id = match self.session_manager.pop_authenticated_user_id()? {
+            Some(user_id) => user_id,
+            None => {
+                self.task_renderer
+                    .render_error("authentication is required.");
+                return Ok(());
+            }
+        };
         let id = args.value_of("id").unwrap();
-        usecase::DeleteTask::new(&mut self.task_repo).invoke(id)?;
+        usecase::DeleteTask::new(&mut self.task_repo).invoke(id, &user_id)?;
 
         self.task_renderer
             .render_message("The task is successfully deleted.");

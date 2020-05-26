@@ -122,7 +122,7 @@ fn delete_task() {
         .unwrap();
 
     usecase::DeleteTask::new(&mut repo)
-        .invoke(&created.id())
+        .invoke(&created.id(), &user_id)
         .expect("should have succeeded to delete task");
 
     let got = usecase::GetTasks::new(&repo).invoke(&user_id).unwrap();

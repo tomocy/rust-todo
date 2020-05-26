@@ -126,7 +126,11 @@ impl<'a> DeleteTask<'a> {
         Self { repo }
     }
 
-    pub fn invoke(&mut self, id: &str) -> Result<(), Box<dyn error::Error>> {
+    pub fn invoke(&mut self, id: &str, user_id: &str) -> Result<(), Box<dyn error::Error>> {
+        if let None = self.repo.find_of_user(id, user_id)? {
+            return Err(From::from("no such task"));
+        }
+
         self.repo.delete(id)
     }
 }
